@@ -1,0 +1,46 @@
+INVOICE {{invoice.number}}
+
+FROM
+
+{{company.name}}
+{{company.address}}
+{{company.website}}
+
+---
+
+INVOICE DETAILS
+
+Invoice Number: {{invoice.number}}
+Invoice Date: {{invoice.date}}
+Due Date: {{invoice.dueDate}}
+
+---
+
+ITEMS
+
+Description: Professional Services
+Service period: Jan 1 - Jan 31, 2024
+Quantity: 1
+Unit Price: $2,500.00
+Amount: $2,500.00
+
+---
+
+TOTALS
+
+Subtotal: {{invoice.subtotal}}
+Tax: {{invoice.tax}}
+Total Due: {{invoice.amount}} {{invoice.currency}}
+
+---
+
+PAYMENT INSTRUCTIONS
+
+{{payment.instructions}}
+
+---
+
+{{company.name}}
+{{company.website}}
+
+Questions about this invoice? Contact: {{company.supportEmail}}

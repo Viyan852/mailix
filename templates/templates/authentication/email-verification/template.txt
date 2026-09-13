@@ -1,0 +1,25 @@
+VERIFY YOUR EMAIL ADDRESS
+
+Hi {{user.firstName}},
+
+Thanks for signing up! Please verify your email address to activate your {{company.name}} account.
+
+VERIFY EMAIL ADDRESS
+{{verification.url}}
+
+---
+
+Didn't request this?
+
+If you didn't sign up for a {{company.name}} account, you can safely ignore this email. Your email wasn't used to create an account.
+
+This verification link expires in {{verification.expiresIn}}.
+
+---
+
+{{company.name}}
+{{company.website}}
+
+Questions? Contact support: {{company.supportEmail}}
+Unsubscribe: {{unsubscribe.url}}
+Email preferences: {{preferences.url}}

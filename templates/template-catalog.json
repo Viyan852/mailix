@@ -1,0 +1,656 @@
+{
+  "version": "1.0.0",
+  "name": "MAILIX Premium Email Templates",
+  "description": "A collection of 40+ production-ready, original HTML email templates designed for premium SaaS platforms",
+  "designFamilies": {
+    "mailix-core": {
+      "name": "MAILIX Core",
+      "description": "Clean, modern, professional SaaS emails with refined aesthetics",
+      "primaryColor": "#6366F1",
+      "accentColor": "#EC4899",
+      "backgroundColor": "#FFFFFF",
+      "textColor": "#1F2937",
+      "characteristics": ["Minimal", "Professional", "Accessible", "Versatile"]
+    },
+    "midnight-signal": {
+      "name": "Midnight Signal",
+      "description": "Dark, technical, futuristic style for developer-focused brands",
+      "primaryColor": "#06B6D4",
+      "accentColor": "#A78BFA",
+      "backgroundColor": "#0F172A",
+      "textColor": "#F1F5F9",
+      "characteristics": ["Dark", "Technical", "Modern", "Premium"]
+    },
+    "editorial": {
+      "name": "Editorial",
+      "description": "Typography-focused with sophisticated layouts and strong hierarchy",
+      "primaryColor": "#3B82F6",
+      "accentColor": "#F59E0B",
+      "backgroundColor": "#FAFAFA",
+      "textColor": "#111827",
+      "characteristics": ["Editorial", "Elegant", "Readable", "Sophisticated"]
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "description": "Professional B2B corporate design with trustworthy visual hierarchy",
+      "primaryColor": "#1F2937",
+      "accentColor": "#3B82F6",
+      "backgroundColor": "#FFFFFF",
+      "textColor": "#374151",
+      "characteristics": ["Corporate", "Trustworthy", "Accessible", "Compliance-friendly"]
+    },
+    "commerce": {
+      "name": "Commerce",
+      "description": "Premium transactional and commerce design for ecommerce platforms",
+      "primaryColor": "#059669",
+      "accentColor": "#DC2626",
+      "backgroundColor": "#FFFFFF",
+      "textColor": "#1F2937",
+      "characteristics": ["Transactional", "Clear", "Action-oriented", "Structured"]
+    }
+  },
+  "categories": {
+    "authentication": {
+      "name": "Authentication and Security",
+      "templates": [
+        "email-verification",
+        "verification-code",
+        "password-reset",
+        "password-changed",
+        "new-login-alert",
+        "suspicious-login-alert",
+        "two-factor-code",
+        "account-invitation",
+        "account-activated",
+        "email-address-changed"
+      ]
+    },
+    "lifecycle": {
+      "name": "User Lifecycle",
+      "templates": [
+        "welcome-email",
+        "getting-started",
+        "onboarding-checklist",
+        "trial-started",
+        "trial-ending-soon",
+        "trial-expired",
+        "upgrade-confirmation",
+        "account-cancellation",
+        "re-engagement",
+        "profile-completion-reminder"
+      ]
+    },
+    "business": {
+      "name": "Business and Operations",
+      "templates": [
+        "invoice",
+        "payment-successful",
+        "payment-failed",
+        "refund-processed",
+        "subscription-started",
+        "subscription-renewed",
+        "subscription-canceled",
+        "maintenance-notice",
+        "service-outage",
+        "support-ticket-created"
+      ]
+    },
+    "marketing": {
+      "name": "Marketing and Newsletter",
+      "templates": [
+        "product-announcement",
+        "feature-launch",
+        "company-newsletter",
+        "weekly-digest",
+        "monthly-digest",
+        "event-invitation",
+        "webinar-invitation",
+        "product-update",
+        "promotional-campaign",
+        "customer-announcement"
+      ]
+    },
+    "commerce": {
+      "name": "Commerce and Transactions",
+      "templates": [
+        "order-confirmation",
+        "order-shipped",
+        "order-delivered",
+        "order-canceled",
+        "receipt",
+        "cart-reminder",
+        "subscription-renewal",
+        "download-available",
+        "product-recommendation",
+        "delivery-status"
+      ]
+    }
+  },
+  "templates": [
+    {
+      "id": "email-verification",
+      "name": "Email Verification",
+      "slug": "email-verification",
+      "category": "authentication",
+      "designFamily": "mailix-core",
+      "subject": "Verify your email address",
+      "previewText": "Confirm your email to complete setup",
+      "description": "Clean email verification template with prominent CTA",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "user.firstName",
+        "verification.url",
+        "verification.expiresIn",
+        "company.supportEmail"
+      ]
+    },
+    {
+      "id": "verification-code",
+      "name": "Verification Code / OTP",
+      "slug": "verification-code",
+      "category": "authentication",
+      "designFamily": "midnight-signal",
+      "subject": "Your verification code",
+      "previewText": "Use this code to verify your identity",
+      "description": "Dark-themed OTP delivery with high-contrast code display",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "verification.code",
+        "verification.expiresIn",
+        "user.firstName"
+      ]
+    },
+    {
+      "id": "password-reset",
+      "name": "Password Reset",
+      "slug": "password-reset",
+      "category": "authentication",
+      "designFamily": "mailix-core",
+      "subject": "Reset your password",
+      "previewText": "Follow the link to create a new password",
+      "description": "Secure password reset with expiration notice",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "user.firstName",
+        "reset.url",
+        "reset.expiresIn",
+        "company.supportEmail"
+      ]
+    },
+    {
+      "id": "account-activated",
+      "name": "Account Activated",
+      "slug": "account-activated",
+      "category": "authentication",
+      "designFamily": "mailix-core",
+      "subject": "Your account is ready",
+      "previewText": "Welcome! Your account has been activated.",
+      "description": "Success confirmation with next steps",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "user.firstName",
+        "company.website"
+      ]
+    },
+    {
+      "id": "two-factor-code",
+      "name": "Two-Factor Authentication Code",
+      "slug": "two-factor-code",
+      "category": "authentication",
+      "designFamily": "midnight-signal",
+      "subject": "Your authentication code",
+      "previewText": "Use this code to complete your login",
+      "description": "High-security 2FA code delivery with minimal design",
+      "variables": [
+        "company.name",
+        "verification.code",
+        "verification.expiresIn",
+        "user.firstName"
+      ]
+    },
+    {
+      "id": "welcome-email",
+      "name": "Welcome Email",
+      "slug": "welcome-email",
+      "category": "lifecycle",
+      "designFamily": "mailix-core",
+      "subject": "Welcome to {{company.name}}",
+      "previewText": "Get started with your new account",
+      "description": "Warm welcome with onboarding path and primary CTA",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "user.firstName",
+        "company.website",
+        "company.supportEmail"
+      ]
+    },
+    {
+      "id": "onboarding-checklist",
+      "name": "Onboarding Checklist",
+      "slug": "onboarding-checklist",
+      "category": "lifecycle",
+      "designFamily": "editorial",
+      "subject": "Get started with {{company.name}} — Your checklist",
+      "previewText": "Here's what to do next to get the most out of your account",
+      "description": "Structured onboarding checklist with clear next steps",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "user.firstName",
+        "company.website"
+      ]
+    },
+    {
+      "id": "trial-started",
+      "name": "Trial Started",
+      "slug": "trial-started",
+      "category": "lifecycle",
+      "designFamily": "enterprise",
+      "subject": "Your free trial has started",
+      "previewText": "You have 14 days of full access. Here's what you can do.",
+      "description": "Trial activation notice with feature highlights",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "user.firstName",
+        "company.website",
+        "trial.daysRemaining"
+      ]
+    },
+    {
+      "id": "trial-ending-soon",
+      "name": "Trial Ending Soon",
+      "slug": "trial-ending-soon",
+      "category": "lifecycle",
+      "designFamily": "mailix-core",
+      "subject": "Your {{company.name}} trial ends in 2 days",
+      "previewText": "Don't lose access to your data. Upgrade now.",
+      "description": "Urgency-focused trial expiration warning with upgrade CTA",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "user.firstName",
+        "trial.daysRemaining",
+        "company.website"
+      ]
+    },
+    {
+      "id": "upgrade-confirmation",
+      "name": "Upgrade Confirmation",
+      "slug": "upgrade-confirmation",
+      "category": "lifecycle",
+      "designFamily": "commerce",
+      "subject": "Welcome to {{company.name}} Pro",
+      "previewText": "Your upgrade is complete. Enjoy premium features.",
+      "description": "Upgrade success with feature access and support info",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "user.firstName",
+        "subscription.name",
+        "company.supportEmail"
+      ]
+    },
+    {
+      "id": "invoice",
+      "name": "Invoice",
+      "slug": "invoice",
+      "category": "business",
+      "designFamily": "enterprise",
+      "subject": "Invoice {{invoice.number}} from {{company.name}}",
+      "previewText": "Your invoice for services rendered",
+      "description": "Professional invoice with line items and payment details",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.address",
+        "invoice.number",
+        "invoice.date",
+        "invoice.dueDate",
+        "invoice.items",
+        "invoice.subtotal",
+        "invoice.tax",
+        "invoice.total",
+        "invoice.currency",
+        "payment.instructions",
+        "company.supportEmail"
+      ]
+    },
+    {
+      "id": "payment-successful",
+      "name": "Payment Successful",
+      "slug": "payment-successful",
+      "category": "business",
+      "designFamily": "commerce",
+      "subject": "Payment received",
+      "previewText": "Thank you! Your payment has been processed.",
+      "description": "Confirmation of successful payment with receipt details",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "user.firstName",
+        "payment.amount",
+        "payment.currency",
+        "payment.method",
+        "payment.date",
+        "invoice.number",
+        "company.website"
+      ]
+    },
+    {
+      "id": "payment-failed",
+      "name": "Payment Failed",
+      "slug": "payment-failed",
+      "category": "business",
+      "designFamily": "mailix-core",
+      "subject": "Payment could not be processed",
+      "previewText": "We had trouble processing your payment. Please try again.",
+      "description": "Payment failure notification with retry instructions",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "user.firstName",
+        "payment.amount",
+        "payment.currency",
+        "payment.failureReason",
+        "company.website",
+        "company.supportEmail"
+      ]
+    },
+    {
+      "id": "subscription-started",
+      "name": "Subscription Started",
+      "slug": "subscription-started",
+      "category": "business",
+      "designFamily": "commerce",
+      "subject": "Your subscription is active",
+      "previewText": "Welcome to {{subscription.name}}. Billing details inside.",
+      "description": "Subscription activation with billing info and features",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "user.firstName",
+        "subscription.name",
+        "subscription.price",
+        "subscription.currency",
+        "subscription.billingCycle",
+        "subscription.nextBillingDate",
+        "company.website"
+      ]
+    },
+    {
+      "id": "subscription-renewed",
+      "name": "Subscription Renewed",
+      "slug": "subscription-renewed",
+      "category": "business",
+      "designFamily": "enterprise",
+      "subject": "Your subscription has been renewed",
+      "previewText": "Thank you! Your {{subscription.name}} subscription is active.",
+      "description": "Renewal confirmation with receipt and next renewal date",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "user.firstName",
+        "subscription.name",
+        "subscription.amount",
+        "subscription.currency",
+        "subscription.renewalDate",
+        "subscription.nextRenewalDate",
+        "invoice.number"
+      ]
+    },
+    {
+      "id": "product-announcement",
+      "name": "Product Announcement",
+      "slug": "product-announcement",
+      "category": "marketing",
+      "designFamily": "editorial",
+      "subject": "Introducing {{product.name}}",
+      "previewText": "We've built something special. Read the full story.",
+      "description": "Launch announcement with narrative and CTA",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "product.name",
+        "product.description",
+        "product.url",
+        "company.website"
+      ]
+    },
+    {
+      "id": "feature-launch",
+      "name": "Feature Launch",
+      "slug": "feature-launch",
+      "category": "marketing",
+      "designFamily": "mailix-core",
+      "subject": "New feature: {{feature.name}} is here",
+      "previewText": "Something new is waiting for you in your dashboard",
+      "description": "Feature release with benefits and how to access",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "feature.name",
+        "feature.description",
+        "feature.benefits",
+        "feature.url",
+        "company.website"
+      ]
+    },
+    {
+      "id": "company-newsletter",
+      "name": "Company Newsletter",
+      "slug": "company-newsletter",
+      "category": "marketing",
+      "designFamily": "editorial",
+      "subject": "{{company.name}} Newsletter — {{month}} {{year}}",
+      "previewText": "This month in {{company.name}}: insights and updates",
+      "description": "Monthly newsletter with curated content sections",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "newsletter.month",
+        "newsletter.year",
+        "newsletter.articles",
+        "newsletter.featuredStory",
+        "company.website",
+        "unsubscribe.url",
+        "preferences.url"
+      ]
+    },
+    {
+      "id": "event-invitation",
+      "name": "Event Invitation",
+      "slug": "event-invitation",
+      "category": "marketing",
+      "designFamily": "mailix-core",
+      "subject": "You're invited to {{event.name}}",
+      "previewText": "Join us for an exclusive {{event.type}} on {{event.date}}",
+      "description": "Event invite with date, time, location and RSVP CTA",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "event.name",
+        "event.type",
+        "event.date",
+        "event.time",
+        "event.location",
+        "event.description",
+        "event.speakerName",
+        "event.url",
+        "company.website"
+      ]
+    },
+    {
+      "id": "order-confirmation",
+      "name": "Order Confirmation",
+      "slug": "order-confirmation",
+      "category": "commerce",
+      "designFamily": "commerce",
+      "subject": "Order confirmed — {{order.number}}",
+      "previewText": "Thank you for your order. Tracking info inside.",
+      "description": "Order confirmation with items, total, and tracking",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "user.firstName",
+        "order.number",
+        "order.date",
+        "order.items",
+        "order.subtotal",
+        "order.shipping",
+        "order.tax",
+        "order.total",
+        "order.currency",
+        "order.estimatedDelivery",
+        "tracking.url",
+        "company.website",
+        "company.supportEmail"
+      ]
+    },
+    {
+      "id": "order-shipped",
+      "name": "Order Shipped",
+      "slug": "order-shipped",
+      "category": "commerce",
+      "designFamily": "commerce",
+      "subject": "Your order is on the way — {{order.number}}",
+      "previewText": "Track your shipment with the details below.",
+      "description": "Shipment notification with tracking information",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "user.firstName",
+        "order.number",
+        "order.items",
+        "tracking.number",
+        "tracking.carrier",
+        "tracking.url",
+        "order.estimatedDelivery",
+        "company.website"
+      ]
+    },
+    {
+      "id": "order-delivered",
+      "name": "Order Delivered",
+      "slug": "order-delivered",
+      "category": "commerce",
+      "designFamily": "commerce",
+      "subject": "Your order has arrived",
+      "previewText": "Enjoy your purchase! Here's what we sent you.",
+      "description": "Delivery confirmation with post-purchase engagement",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "user.firstName",
+        "order.number",
+        "order.items",
+        "delivery.date",
+        "company.website",
+        "review.url",
+        "support.url"
+      ]
+    },
+    {
+      "id": "cart-reminder",
+      "name": "Cart Reminder",
+      "slug": "cart-reminder",
+      "category": "commerce",
+      "designFamily": "mailix-core",
+      "subject": "You left {{cartItems.count}} item{{cartItems.plural}} in your cart",
+      "previewText": "Don't miss out. Complete your purchase.",
+      "description": "Abandoned cart recovery with product details and CTA",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "user.firstName",
+        "cart.items",
+        "cart.total",
+        "cart.currency",
+        "cart.url",
+        "company.website"
+      ]
+    },
+    {
+      "id": "product-recommendation",
+      "name": "Product Recommendation",
+      "slug": "product-recommendation",
+      "category": "commerce",
+      "designFamily": "editorial",
+      "subject": "We think you'll love these",
+      "previewText": "Based on your recent purchase, here are some recommendations.",
+      "description": "Personalized product recommendations post-purchase",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "company.primaryColor",
+        "user.firstName",
+        "recommendations.products",
+        "company.website"
+      ]
+    },
+    {
+      "id": "delivery-status",
+      "name": "Delivery Status Update",
+      "slug": "delivery-status",
+      "category": "commerce",
+      "designFamily": "commerce",
+      "subject": "Delivery update for {{order.number}}",
+      "previewText": "Your package is {{delivery.status}}.",
+      "description": "Real-time delivery status notification",
+      "variables": [
+        "company.name",
+        "company.logoUrl",
+        "order.number",
+        "delivery.status",
+        "delivery.location",
+        "delivery.estimatedTime",
+        "tracking.url",
+        "company.website"
+      ]
+    }
+  ],
+  "statistics": {
+    "totalTemplates": 25,
+    "designFamilies": 5,
+    "categories": 5,
+    "responsive": true,
+    "emailClientCompatibility": [
+      "Gmail",
+      "Outlook (Windows and Mac)",
+      "Apple Mail",
+      "iOS Mail",
+      "Android Mail"
+    ]
+  },
+  "technicalSpecs": {
+    "htmlStructure": "Table-based for email compatibility",
+    "cssApproach": "Inline CSS with fallbacks",
+    "responsiveDesign": true,
+    "dynamicVariables": true,
+    "plainTextVersions": true,
+    "javascriptFree": true,
+    "externalDependencies": "None",
+    "webFonts": "System fonts only",
+    "accessibility": true
+  }
+}

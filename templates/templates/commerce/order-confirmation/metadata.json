@@ -1,0 +1,75 @@
+{
+  "id": "order-confirmation",
+  "name": "Order Confirmation",
+  "slug": "order-confirmation",
+  "category": "commerce",
+  "designFamily": "commerce",
+  "subject": "Order confirmed — {{order.number}}",
+  "previewText": "Thank you for your order. Tracking info inside.",
+  "description": "Professional order confirmation with order summary, itemized list, totals, and tracking CTA.",
+  "features": [
+    "Success badge",
+    "Order summary card",
+    "Itemized line items",
+    "Subtotal, tax, shipping breakdown",
+    "Prominent tracking button",
+    "Estimated delivery date",
+    "Customer reassurance messaging",
+    "Premium formatting"
+  ],
+  "variables": [
+    "company.name",
+    "company.logoUrl",
+    "company.primaryColor",
+    "user.firstName",
+    "order.number",
+    "order.date",
+    "order.items",
+    "order.subtotal",
+    "order.shipping",
+    "order.tax",
+    "order.total",
+    "order.currency",
+    "order.estimatedDelivery",
+    "tracking.url",
+    "company.website",
+    "company.supportEmail",
+    "unsubscribe.url"
+  ],
+  "colors": {
+    "background": "#F8FAFB",
+    "cardBackground": "#FFFFFF",
+    "textPrimary": "#111827",
+    "textSecondary": "#6B7280",
+    "textTertiary": "#9CA3AF",
+    "borderColor": "#E5E7EB",
+    "accentColor": "{{company.primaryColor}}",
+    "successColor": "#059669"
+  },
+  "typography": {
+    "headingFont": "system-ui",
+    "bodyFont": "system-ui",
+    "headingSize": "24px",
+    "bodySize": "15px",
+    "monospaceSize": "18px (order number)",
+    "lineHeight": "1.5"
+  },
+  "responsive": true,
+  "emailClientCompatibility": {
+    "gmail": "Fully compatible",
+    "outlookWindows": "Fully compatible",
+    "outlookMac": "Fully compatible",
+    "appleMail": "Fully compatible",
+    "iosMail": "Fully compatible",
+    "androidMail": "Fully compatible"
+  },
+  "accessibility": {
+    "altText": true,
+    "colorContrast": "WCAG AA compliant",
+    "semanticMarkup": true,
+    "tableHeaders": true
+  },
+  "useCase": "Send immediately after customer completes purchase. Confirms order details, provides order number and tracking information, reassures customer about next steps.",
+  "customizationGuide": "Update the items loop to include actual products. Customize the delivery message based on your shipping times. Modify colors to match your brand. Include real order totals.",
+  "conversionStrategy": "Success badge builds trust. Clear order summary prevents confusion. Prominent tracking button drives engagement. Info box reassures customers about what to expect next."
+}

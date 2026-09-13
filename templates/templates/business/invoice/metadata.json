@@ -1,0 +1,73 @@
+{
+  "id": "invoice",
+  "name": "Invoice",
+  "slug": "invoice",
+  "category": "business",
+  "designFamily": "enterprise",
+  "subject": "Invoice {{invoice.number}} from {{company.name}}",
+  "previewText": "Your invoice for services rendered",
+  "description": "Professional B2B invoice template with company details, itemized billing, and payment instructions.",
+  "features": [
+    "Company header with logo",
+    "Invoice and company details",
+    "Itemized line items with descriptions",
+    "Subtotal, tax, and total calculations",
+    "Due date highlighted",
+    "Payment instructions highlighted",
+    "Professional B2B styling",
+    "Compliance-friendly footer"
+  ],
+  "variables": [
+    "company.name",
+    "company.logoUrl",
+    "company.address",
+    "company.website",
+    "company.supportEmail",
+    "invoice.number",
+    "invoice.date",
+    "invoice.dueDate",
+    "invoice.items",
+    "invoice.subtotal",
+    "invoice.tax",
+    "invoice.amount",
+    "invoice.currency",
+    "payment.instructions"
+  ],
+  "colors": {
+    "background": "#F3F4F6",
+    "cardBackground": "#FFFFFF",
+    "textPrimary": "#111827",
+    "textSecondary": "#374151",
+    "textTertiary": "#6B7280",
+    "borderColor": "#E5E7EB",
+    "highlightBackground": "#EFF6FF",
+    "highlightBorder": "#3B82F6",
+    "dueDateColor": "#DC2626"
+  },
+  "typography": {
+    "headingFont": "system-ui",
+    "bodyFont": "system-ui",
+    "headingSize": "28px (INVOICE header)",
+    "bodySize": "15px",
+    "smallSize": "12px (labels)",
+    "lineHeight": "1.5"
+  },
+  "responsive": true,
+  "emailClientCompatibility": {
+    "gmail": "Fully compatible",
+    "outlookWindows": "Fully compatible",
+    "outlookMac": "Fully compatible",
+    "appleMail": "Fully compatible",
+    "iosMail": "Fully compatible",
+    "androidMail": "Fully compatible"
+  },
+  "accessibility": {
+    "altText": true,
+    "colorContrast": "WCAG AA compliant",
+    "semanticMarkup": true,
+    "tableStructure": "proper with headers"
+  },
+  "useCase": "Send to customers/clients with invoice details. Used for billing, subscription renewals, one-time purchases, and service invoices. Suitable for B2B and B2C transactions.",
+  "customizationGuide": "Update company details in header. Create line items for your products/services. Add payment instructions specific to your payment methods. Customize due date and totals. Include correct tax calculations.",
+  "complianceNotes": "Invoice includes: Company information, invoice number and date, itemized breakdown, tax details, payment instructions, and contact information. Suitable for tax and accounting compliance."
+}

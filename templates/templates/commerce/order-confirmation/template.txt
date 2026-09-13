@@ -1,0 +1,45 @@
+ORDER CONFIRMED
+
+Thank you {{user.firstName}}! Your order has been received and is being prepared for shipment.
+
+---
+
+ORDER SUMMARY
+
+Order Number: {{order.number}}
+Order Date: {{order.date}}
+Estimated Delivery: {{order.estimatedDelivery}}
+
+---
+
+ITEMS ORDERED
+
+Product Name
+SKU: PROD-12345
+Quantity: 1
+Price: $99.00
+
+---
+
+ORDER TOTAL
+
+Subtotal: {{order.subtotal}}
+Shipping: {{order.shipping}}
+Tax: {{order.tax}}
+Total: {{order.total}} {{order.currency}}
+
+---
+
+TRACK YOUR ORDER
+
+{{tracking.url}}
+
+What's next? You'll receive an email with tracking information as soon as your order ships. You can also check your order status anytime on your account.
+
+---
+
+{{company.name}}
+{{company.website}}
+
+Questions? Contact support: {{company.supportEmail}}
+Unsubscribe: {{unsubscribe.url}}

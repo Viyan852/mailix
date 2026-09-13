@@ -1,0 +1,60 @@
+{
+  "id": "verification-code",
+  "name": "Verification Code / OTP",
+  "slug": "verification-code",
+  "category": "authentication",
+  "designFamily": "midnight-signal",
+  "subject": "Your verification code",
+  "previewText": "Use this code to verify your identity",
+  "description": "Dark-themed OTP delivery with prominent code display for high visibility.",
+  "features": [
+    "Prominent code display",
+    "High contrast design",
+    "Monospace font for code",
+    "Security messaging",
+    "Dark theme",
+    "Premium aesthetic"
+  ],
+  "variables": [
+    "company.name",
+    "company.logoUrl",
+    "user.firstName",
+    "verification.code",
+    "verification.expiresIn"
+  ],
+  "colors": {
+    "background": "#0F172A",
+    "cardBackground": "#1E293B",
+    "textPrimary": "#F1F5F9",
+    "textSecondary": "#CBD5E1",
+    "textTertiary": "#94A3B8",
+    "borderColor": "#334155",
+    "accentColor": "#06B6D4"
+  },
+  "typography": {
+    "headingFont": "system-ui",
+    "bodyFont": "system-ui",
+    "codeFont": "monospace",
+    "headingSize": "28px",
+    "bodySize": "14px",
+    "codeSize": "48px",
+    "lineHeight": "1.6"
+  },
+  "responsive": true,
+  "emailClientCompatibility": {
+    "gmail": "Fully compatible",
+    "outlookWindows": "Fully compatible",
+    "outlookMac": "Fully compatible",
+    "appleMail": "Fully compatible",
+    "iosMail": "Fully compatible",
+    "androidMail": "Fully compatible"
+  },
+  "accessibility": {
+    "altText": true,
+    "colorContrast": "WCAG AAA compliant",
+    "semanticMarkup": true
+  },
+  "useCase": "Send this template when users need to verify their identity using a one-time password. Common for two-factor authentication, new device verification, or sensitive operations.",
+  "customizationGuide": "The verification code displays in a prominent cyan box. Change the code display colors by updating the background and border colors in the code display section. Adjust the font size if your codes are longer than 6 digits.",
+  "securityNotes": "This template includes messaging that warns users not to share their code. Codes should expire after a short period (5-15 minutes). Always use secure channels for code delivery."
+}

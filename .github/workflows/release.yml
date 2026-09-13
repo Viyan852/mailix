@@ -1,0 +1,377 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # Tests run FIRST — builds only proceed if tests pass
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Run lint (syntax check)
+        run: |
+          node -c server/server.js
+          node -c server/config.js
+          node -c server/routes/emails.js
+          node -c server/routes/password-reset.js
+          node -c server/routes/api-keys.js
+          node -c server/routes/newsletter.js
+          node -c server/routes/subscribers.js
+          node -c server/routes/templates.js
+          node -c server/routes/domains.js
+          node -c cli/mlx.js
+      - name: Run tests
+        run: npm test
+      - name: Build check
+        run: npm run build
+
+  build-windows:
+    name: Build Windows x64
+    needs: [test]
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Get version
+        id: version
+        shell: pwsh
+        run: |
+          $v = (Get-Content package.json | ConvertFrom-Json).version
+          if (-not $v) { throw "No version in package.json" }
+          "value=$v" | Out-File -Encoding ascii $env:GITHUB_OUTPUT
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install rcedit
+        run: npm install --no-save rcedit
+
+      - name: Validate icon
+        run: node scripts/validate-icon.js
+
+      - name: Build Windows x64 release (bundles Node runtime + dependencies)
+        run: node scripts/build-release.js --platform=windows-x64 --out=dist/build
+
+      - name: Install NSIS
+        uses: peaceiris/actions-setup-nsis@v1
+        with:
+          version: '3.09'
+
+      - name: Build MAILIX-Setup-x64.exe
+        run: node scripts/build-installer.js --platform=windows-x64 --in=dist/build/mailix-windows-x64-v${{ steps.version.outputs.value }} --out=dist
+
+      - name: Create portable ZIP
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.value }}"
+          $buildDir = "dist\build\mailix-windows-x64-v$version"
+          if (-not (Test-Path $buildDir)) { throw "Build directory missing: $buildDir" }
+          Compress-Archive -Path $buildDir -DestinationPath "dist\mailix-windows-x64.zip" -Force
+
+      - name: Verify artifacts exist
+        shell: pwsh
+        run: |
+          $artifacts = @("dist\MAILIX-Setup-x64.exe", "dist\mailix-windows-x64.zip")
+          foreach ($f in $artifacts) {
+            if (-not (Test-Path $f)) { throw "Missing artifact: $f" }
+            Write-Host "✓ Found: $f ($('{0:N0}' -f (Get-Item $f).Length) bytes)"
+          }
+
+      - name: Verify no secrets in artifacts
+        shell: pwsh
+        run: |
+          # Ensure .env is NOT included in the ZIP
+          $zip = [System.IO.Compression.ZipFile]::OpenRead("dist\mailix-windows-x64.zip")
+          $envFiles = $zip.Entries | Where-Object { $_.Name -eq ".env" }
+          $zip.Dispose()
+          if ($envFiles) { throw ".env file found in release ZIP — this is a secret leak!" }
+          Write-Host "✓ No .env in release ZIP"
+
+      - name: Generate SHA256SUMS
+        shell: pwsh
+        run: |
+          $final = @("dist\MAILIX-Setup-x64.exe", "dist\mailix-windows-x64.zip")
+          $lines = @()
+          foreach ($f in $final) {
+            if (-not (Test-Path $f)) { throw "Missing artifact: $f" }
+            $h = (Get-FileHash $f -Algorithm SHA256).Hash.ToLower()
+            $lines += "$h  $(Split-Path $f -Leaf)"
+          }
+          $lines | Out-File -Encoding ascii dist\SHA256SUMS.txt
+          Get-Content dist\SHA256SUMS.txt
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mailix-windows-x64
+          path: |
+            dist/MAILIX-Setup-x64.exe
+            dist/mailix-windows-x64.zip
+            dist/SHA256SUMS.txt
+
+  build-cross-platform:
+    name: Build ${{ matrix.target }}
+    needs: [test]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: windows-arm64
+            os: windows-latest
+          - target: linux-x64
+            os: ubuntu-latest
+          - target: linux-arm64
+            os: ubuntu-latest
+          - target: macos-universal
+            os: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Get version
+        id: version
+        run: |
+          v=$(node -p "require('./package.json').version")
+          echo "value=$v" >> $GITHUB_OUTPUT
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Validate icon
+        run: node scripts/validate-icon.js
+
+      - name: Build
+        run: node scripts/build-release.js --platform=${{ matrix.target }} --out=dist/build
+
+      - name: Set executable permissions
+        run: |
+          BUILD_DIR="dist/build/mailix-${{ matrix.target }}-v${{ steps.version.outputs.value }}"
+          if [ -d "$BUILD_DIR/bin" ]; then
+            chmod +x "$BUILD_DIR/bin/"* 2>/dev/null || true
+          fi
+
+      - name: Verify artifact directory exists
+        run: |
+          BUILD_DIR="dist/build/mailix-${{ matrix.target }}-v${{ steps.version.outputs.value }}"
+          if [ ! -d "$BUILD_DIR" ]; then
+            echo "Build directory missing: $BUILD_DIR"
+            exit 1
+          fi
+          echo "✓ Build directory: $BUILD_DIR"
+          ls -la "$BUILD_DIR"
+
+      - name: Validate macOS Universal App
+        if: matrix.target == 'macos-universal'
+        run: |
+          cd dist/build/mailix-macos-universal-v${{ steps.version.outputs.value }}
+          APP="MAILIX.app"
+          
+          # 1. Structure
+          for req in "Contents/MacOS/MAILIX" "Contents/Resources/app" "Contents/Resources/runtime" "Contents/Resources/icon.icns" "Contents/Info.plist"; do
+            if [ ! -e "$APP/$req" ]; then echo "ERROR: Missing $req in $APP"; exit 1; fi
+          done
+          
+          # 2. Info.plist
+          if ! grep -q "com.viyan.mailix" "$APP/Contents/Info.plist"; then echo "ERROR: Bad CFBundleIdentifier"; exit 1; fi
+          if ! grep -q "${{ steps.version.outputs.value }}" "$APP/Contents/Info.plist"; then echo "ERROR: Bad version in Info.plist"; exit 1; fi
+          if ! grep -q "<string>MAILIX</string>" "$APP/Contents/Info.plist"; then echo "ERROR: Bad CFBundleExecutable"; exit 1; fi
+          
+          # 3. Universal Binary
+          NODE_BIN="$APP/Contents/Resources/runtime/bin/node"
+          LIPO_OUT=$(lipo -info "$NODE_BIN")
+          echo "lipo -info node: $LIPO_OUT"
+          if ! echo "$LIPO_OUT" | grep -q "x86_64"; then echo "ERROR: Node is missing x86_64"; exit 1; fi
+          if ! echo "$LIPO_OUT" | grep -q "arm64"; then echo "ERROR: Node is missing arm64"; exit 1; fi
+          
+          # 4. Executable
+          if [ ! -x "$APP/Contents/MacOS/MAILIX" ]; then echo "ERROR: Launcher not executable"; exit 1; fi
+          
+          # 5. Ad-hoc signature
+          codesign --verify -v "$APP" || { echo "ERROR: App signature invalid"; exit 1; }
+          echo "✓ macOS Universal App validation passed!"
+
+      - name: Archive
+        run: |
+          cd dist/build
+          if [ "${{ matrix.target }}" = "macos-universal" ]; then
+            hdiutil create -volname MAILIX -srcfolder mailix-macos-universal-v${{ steps.version.outputs.value }}/MAILIX.app -ov -format UDZO ../mailix-macos-universal.dmg
+            cd mailix-macos-universal-v${{ steps.version.outputs.value }}
+            zip -qr ../../mailix-macos-universal.zip MAILIX.app
+            
+            # Verify DMG and ZIP were created
+            cd ../../
+            if [ ! -f "mailix-macos-universal.dmg" ]; then echo "ERROR: DMG missing"; exit 1; fi
+            if [ ! -f "mailix-macos-universal.zip" ]; then echo "ERROR: ZIP missing"; exit 1; fi
+            if ! unzip -l mailix-macos-universal.zip | grep -q "MAILIX.app/Contents/MacOS/MAILIX"; then echo "ERROR: ZIP does not contain MAILIX.app"; exit 1; fi
+            echo "✓ macOS archives created and validated!"
+          else
+            tar -czf ../mailix-${{ matrix.target }}.tar.gz mailix-${{ matrix.target }}-v${{ steps.version.outputs.value }}
+          fi
+
+      - name: Generate checksum
+        run: |
+          cd dist
+          if [ "${{ matrix.target }}" = "macos-universal" ]; then
+            shasum -a 256 mailix-macos-universal.dmg > mailix-macos-universal.dmg.sha256
+            shasum -a 256 mailix-macos-universal.zip > mailix-macos-universal.zip.sha256
+            cat mailix-macos-universal.dmg.sha256
+            cat mailix-macos-universal.zip.sha256
+          else
+            shasum -a 256 mailix-${{ matrix.target }}.tar.gz > mailix-${{ matrix.target }}.sha256
+            cat mailix-${{ matrix.target }}.sha256
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mailix-${{ matrix.target }}
+          path: |
+            dist/mailix-${{ matrix.target }}.tar.gz
+            dist/mailix-${{ matrix.target }}.dmg
+            dist/mailix-${{ matrix.target }}.zip
+            dist/mailix-${{ matrix.target }}*.sha256
+
+  release:
+    name: Publish GitHub Release
+    needs: [test, build-windows, build-cross-platform]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List downloaded artifacts
+        run: |
+          find artifacts -type f | sort
+          echo "---"
+          du -sh artifacts/*
+
+      - name: Verify no secrets in artifacts
+        run: |
+          # Scan all archives for .env files
+          for f in artifacts/*.zip artifacts/*.tar.gz; do
+            if [ -f "$f" ]; then
+              echo "Scanning: $f"
+              if file "$f" | grep -q "Zip"; then
+                if unzip -l "$f" 2>/dev/null | grep -q '\.env$'; then
+                  echo "ERROR: .env found in $f"
+                  exit 1
+                fi
+              elif file "$f" | grep -q "gzip"; then
+                if tar -tzf "$f" 2>/dev/null | grep -q '\.env$'; then
+                  echo "ERROR: .env found in $f"
+                  exit 1
+                fi
+              fi
+              echo "✓ Clean: $f"
+            fi
+          done
+
+      - name: Generate combined SHA256SUMS
+        run: |
+          cd artifacts
+          # Generate checksums for all release artifacts (files, not directories)
+          find . -maxdepth 1 -type f | sort | while read f; do
+            sha256sum "$f" >> SHA256SUMS.txt
+          done
+          echo "=== SHA256SUMS.txt ==="
+          cat SHA256SUMS.txt
+
+      - name: Get version from tag
+        id: tag
+        run: echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release (DRAFT — manually review before publishing)
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
+          files: |
+            artifacts/*.exe
+            artifacts/*.dmg
+            artifacts/*.zip
+            artifacts/*.tar.gz
+            artifacts/*.sha256
+            artifacts/SHA256SUMS.txt
+          body: |
+            ## MAILIX ${{ steps.tag.outputs.version }} — by its_viyan
+
+            > **Release Candidate** — Test thoroughly before marking as stable.
+
+            Self-contained, zero-runtime-install email infrastructure platform.
+
+            ### ⚠️ Before using in production
+
+            - Set `MAILIX_ENV=production` in your environment
+            - Set a strong `MAILIX_SECRET`
+            - Configure a real email provider (`MAILIX_EMAIL_PROVIDER=smtp|resend|ses`)
+            - The **local provider** delivers to a local inbox only — no real email is sent
+
+            ---
+
+            ### Install on Windows
+
+            1. Download `MAILIX-Setup-x64.exe`
+            2. Run it (no admin required)
+            3. Open a new Command Prompt and run:
+
+                ```
+                mlx-run
+                ```
+
+            ### Portable option (Windows)
+
+            Download `mailix-windows-x64.zip`, extract anywhere, run `bin\mlx-run.exe`.
+
+            ### macOS
+
+            Download `mailix-macos-universal.dmg` (supports both Apple Silicon and Intel).
+
+            1. Open the `.dmg` file
+            2. Drag **MAILIX** to your Applications folder
+            3. On first launch: **Right-click (or Control-click) MAILIX -> Open**. (This bypasses the unsigned developer warning).
+
+            Alternatively, download `mailix-macos-universal.zip`, extract it, and launch the `.app` bundle.
+
+            ### Verify download integrity
+
+            ```bash
+            # Compare against SHA256SUMS.txt
+            sha256sum --check SHA256SUMS.txt
+            ```
+
+            ---
+
+            No Node.js, npm, Python, or Docker required on the end-user's machine.

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice {{invoice.number}}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; line-height: 1.5; color: #374151;">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #F3F4F6; min-height: 100vh;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <!-- Container -->
+        <table width="100%" max-width="680" border="0" cellpadding="0" cellspacing="0" style="background-color: #FFFFFF; border-radius: 6px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px;">
+              <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <img src="{{company.logoUrl}}" alt="{{company.name}}" style="height: 32px; width: auto; display: block;" />
+                  </td>
+                  <td align="right">
+                    <p style="margin: 0; font-size: 28px; font-weight: 700; color: #1F2937;">
+                      INVOICE
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Invoice Details Row -->
+          <tr>
+            <td style="padding: 0 40px;">
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 40px;">
+                <tr>
+                  <td style="width: 50%; padding-right: 20px; vertical-align: top;">
+                    <p style="margin: 0 0 16px 0; font-size: 12px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.5px;">
+                      From
+                    </p>
+                    <p style="margin: 0 0 6px 0; font-size: 15px; font-weight: 600; color: #111827;">
+                      {{company.name}}
+                    </p>
+                    <p style="margin: 0; font-size: 13px; color: #6B7280; line-height: 1.6;">
+                      {{company.address}}<br/>
+                      {{company.website}}
+                    </p>
+                  </td>
+                  <td style="width: 50%; padding-left: 20px; vertical-align: top;">
+                    <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <p style="margin: 0; font-size: 12px; color: #9CA3AF; font-weight: 600;">
+                            Invoice Number
+                          </p>
+                          <p style="margin: 0; font-size: 15px; font-weight: 600; color: #111827;">
+                            {{invoice.number}}
+                          </p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <p style="margin: 0; font-size: 12px; color: #9CA3AF; font-weight: 600;">
+                            Invoice Date
+                          </p>
+                          <p style="margin: 0; font-size: 15px; font-weight: 600; color: #111827;">
+                            {{invoice.date}}
+                          </p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <p style="margin: 0; font-size: 12px; color: #9CA3AF; font-weight: 600;">
+                            Due Date
+                          </p>
+                          <p style="margin: 0; font-size: 15px; font-weight: 600; color: #DC2626;">
+                            {{invoice.dueDate}}
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Line Items -->
+          <tr>
+            <td style="padding: 0 40px 40px 40px;">
+              <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                <tr style="border-bottom: 2px solid #E5E7EB;">
+                  <td style="padding: 12px 0; font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Description
+                  </td>
+                  <td align="right" style="padding: 12px 0; font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Qty
+                  </td>
+                  <td align="right" style="padding: 12px 0; font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Unit Price
+                  </td>
+                  <td align="right" style="padding: 12px 0; font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Amount
+                  </td>
+                </tr>
+                <!-- Example Line Item -->
+                <tr style="border-bottom: 1px solid #E5E7EB;">
+                  <td style="padding: 16px 0;">
+                    <p style="margin: 0 0 4px 0; font-size: 15px; color: #111827; font-weight: 500;">
+                      Professional Services
+                    </p>
+                    <p style="margin: 0; font-size: 13px; color: #6B7280;">
+                      Service period: Jan 1 - Jan 31, 2024
+                    </p>
+                  </td>
+                  <td align="right" style="padding: 16px 0; font-size: 15px; color: #111827;">
+                    1
+                  </td>
+                  <td align="right" style="padding: 16px 0; font-size: 15px; color: #111827;">
+                    $2,500.00
+                  </td>
+                  <td align="right" style="padding: 16px 0; font-size: 15px; font-weight: 600; color: #111827;">
+                    $2,500.00
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Totals -->
+          <tr>
+            <td style="padding: 0 40px 40px 40px;">
+              <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="right" style="width: 50%; padding: 12px 20px 12px 0;">
+                    <p style="margin: 0; font-size: 14px; color: #6B7280;">
+                      Subtotal
+                    </p>
+                  </td>
+                  <td align="right" style="width: 50%; padding: 12px 0; font-size: 14px; font-weight: 500; color: #111827;">
+                    {{invoice.subtotal}}
+                  </td>
+                </tr>
+                <tr>
+                  <td align="right" style="padding: 12px 20px 12px 0;">
+                    <p style="margin: 0; font-size: 14px; color: #6B7280;">
+                      Tax
+                    </p>
+                  </td>
+                  <td align="right" style="padding: 12px 0; font-size: 14px; font-weight: 500; color: #111827;">
+                    {{invoice.tax}}
+                  </td>
+                </tr>
+                <tr style="background-color: #F3F4F6; border-radius: 4px;">
+                  <td align="right" style="padding: 16px 20px 16px 0;">
+                    <p style="margin: 0; font-size: 16px; font-weight: 700; color: #111827;">
+                      Total Due
+                    </p>
+                  </td>
+                  <td align="right" style="padding: 16px 0; font-size: 18px; font-weight: 700; color: #1F2937;">
+                    {{invoice.amount}} {{invoice.currency}}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Payment Terms -->
+          <tr>
+            <td style="padding: 0 40px 40px 40px; border-top: 1px solid #E5E7EB; padding-top: 40px;">
+              <div style="background-color: #EFF6FF; border-left: 4px solid #3B82F6; padding: 16px; border-radius: 4px; margin-bottom: 20px;">
+                <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: #1E40AF;">
+                  Payment Instructions
+                </p>
+                <p style="margin: 0; font-size: 13px; color: #1E3A8A; line-height: 1.6;">
+                  {{payment.instructions}}
+                </p>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 32px 40px; border-top: 1px solid #E5E7EB; text-align: center; background-color: #F9FAFB;">
+              
+              <p style="margin: 0 0 12px 0; font-size: 12px; color: #9CA3AF;">
+                {{company.name}}<br/>
+                {{company.website}}
+              </p>
+              
+              <p style="margin: 0; font-size: 11px; color: #D1D5DB; line-height: 1.6;">
+                Questions about this invoice? <a href="mailto:{{company.supportEmail}}" style="color: #3B82F6; text-decoration: none;">Contact us</a>
+              </p>
+              
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

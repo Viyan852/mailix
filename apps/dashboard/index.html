@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAILIX — by its_viyan</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span>MAILIX</span>
+          <span>by its_viyan</span>
+        </div>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <ul>
+          <li>
+            <a href="/dashboard" class="nav-link active" data-page="dashboard">
+              <span class="nav-icon">⌂</span>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a href="/emails" class="nav-link" data-page="emails">
+              <span class="nav-icon">✉</span>
+              <span>Emails</span>
+            </a>
+          </li>
+          <li>
+            <a href="/automation" class="nav-link" data-page="automation">
+              <span class="nav-icon">⚡</span>
+              <span>Automation</span>
+            </a>
+          </li>
+          <li>
+            <a href="/templates" class="nav-link" data-page="templates">
+              <span class="nav-icon">▣</span>
+              <span>Studio</span>
+            </a>
+          </li>
+          <li>
+            <a href="/domains" class="nav-link" data-page="domains">
+              <span class="nav-icon">◎</span>
+              <span>Domains</span>
+            </a>
+          </li>
+          <li>
+            <a href="/subscribers" class="nav-link" data-page="subscribers">
+              <span class="nav-icon">◌</span>
+              <span>Subscribers</span>
+            </a>
+          </li>
+          <li>
+            <a href="/logs" class="nav-link" data-page="logs">
+              <span class="nav-icon">≡</span>
+              <span>Logs</span>
+            </a>
+          </li>
+          <li>
+            <a href="/analytics" class="nav-link" data-page="analytics">
+              <span class="nav-icon">◒</span>
+              <span>Analytics</span>
+            </a>
+          </li>
+          <li>
+            <a href="/settings" class="nav-link" data-page="settings">
+              <span class="nav-icon">⚙</span>
+              <span>Settings</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Dashboard Home -->
+      <section class="page dashboard-home" id="dashboardPage">
+        <div class="welcome-section">
+          <h1>Welcome back 👋</h1>
+          <p>Here's what's happening with your email infrastructure.</p>
+        </div>
+        
+        <div class="metrics-section">
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-value" id="emailsSent">—</div>
+              <div class="metric-label">Emails Sent</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="delivered">—</div>
+              <div class="metric-label">Delivered</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="opened">—</div>
+              <div class="metric-label">Opened</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="clicked">—</div>
+              <div class="metric-label">Clicked</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="bounced">—</div>
+              <div class="metric-label">Bounced</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="charts-section">
+          <h2>Charts</h2>
+          <div class="charts-grid">
+            <div class="chart-card">
+              <canvas id="emailVolumeChart"></canvas>
+            </div>
+            <div class="chart-card">
+              <canvas id="deliveryRateChart"></canvas>
+            </div>
+            <div class="chart-card">
+              <canvas id="openRateChart"></canvas>
+            </div>
+          </div>
+        </div>
+        
+        <div class="recent-activity">
+          <h2>Recent activity</h2>
+          <div class="activity-list" id="activityList">
+            <div class="loading-placeholder" style="color:var(--text-secondary);font-size:0.875rem;padding:16px;">Loading activity…</div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Projects Page -->
+      <section class="page" id="projectsPage">
+        <div class="page-header">
+          <h2>Projects</h2>
+          <button class="btn btn-primary" onclick="showCreateProjectModal()">Create Project</button>
+        </div>
+        
+        <div class="projects-list" id="projectsList">
+          <!-- Projects will be rendered here -->
+        </div>
+      </section>
+      
+      <!-- Company Branding Page -->
+      <section class="page" id="brandingPage">
+        <div class="page-header">
+          <h2>Company Branding</h2>
+        </div>
+        
+        <div class="branding-config">
+          <div class="form-group">
+            <label>Company Name</label>
+            <input type="text" id="companyName" placeholder="Acme Corp">
+          </div>
+          <div class="form-group">
+            <label>Website</label>
+            <input type="url" id="companyWebsite" placeholder="https://acme.com">
+          </div>
+          <div class="form-group">
+            <label>Primary Color</label>
+            <input type="color" id="primaryColor" value="#6366F1">
+          </div>
+          <div class="form-group">
+            <label>Secondary Color</label>
+            <input type="color" id="secondaryColor" value="#8B5CF6">
+          </div>
+          <div class="form-group">
+            <label>Sender Name</label>
+            <input type="text" id="senderName" placeholder="Acme">
+          </div>
+          <div class="form-group">
+            <label>Sender Email</label>
+            <input type="email" id="senderEmail" placeholder="hello@acme.com">
+          </div>
+          <div class="form-group">
+            <label>Reply-To</label>
+            <input type="email" id="replyTo" placeholder="reply@acme.com">
+          </div>
+        </div>
+        
+        <div class="brand-preview">
+          <h3>Live Preview</h3>
+          <div class="preview-email">
+            <div class="email-header">
+              <span class="company-name" id="previewCompany">Acme</span>
+              <span class="email-subject">Verify your email</span>
+            </div>
+            <div class="email-body">
+              <p>Your verification code is:</p>
+              <span class="verification-code" id="previewCode">583921</span>
+              <p>This code expires shortly.</p>
+              <p>If you didn't request this, you can ignore this email.</p>
+            </div>
+            <div class="email-footer">
+              <span>Powered by MAILIX</span>
+              <span>by its_viyan</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Email Verification Page -->
+      <section class="page" id="verificationPage">
+        <div class="page-header">
+          <h2>Email Verification</h2>
+        </div>
+        
+        <div class="verification-config">
+          <button class="btn btn-secondary" onclick="sendVerificationTest()">Send Test Verification Email</button>
+          <p class="help-text">Send a test verification email to test@example.com</p>
+        </div>
+        
+        <div class="verification-status">
+          <h3>Verification Settings</h3>
+          <div class="setting-row">
+            <span>Enable verification</span>
+            <input type="checkbox" id="verifyEnabled" checked disabled>
+          </div>
+          <div class="setting-row">
+            <span>Max attempts</span>
+            <input type="number" id="maxAttempts" value="5" min="1">
+          </div>
+          <div class="setting-row">
+            <span>Expiration (hours)</span>
+            <input type="number" id="verificationExpiry" value="24" min="1">
+          </div>
+        </div>
+      </section>
+      
+      <!-- Password Reset Page -->
+      <section class="page" id="passwordResetPage">
+        <div class="page-header">
+          <h2>Password Reset</h2>
+        </div>
+        
+        <div class="password-reset-config">
+          <button class="btn btn-secondary" onclick="sendPasswordResetTest()">Send Test Password Reset</button>
+          <p class="help-text">Send a test password reset email to test@example.com</p>
+        </div>
+        
+        <div class="password-reset-status">
+          <h3>Password Reset Settings</h3>
+          <div class="setting-row">
+            <span>Enable password reset</span>
+            <input type="checkbox" id="resetEnabled" checked disabled>
+          </div>
+          <div class="setting-row">
+            <span>Max attempts</span>
+            <input type="number" id="maxResetAttempts" value="3" min="1">
+          </div>
+          <div class="setting-row">
+            <span>Expiration (hours)</span>
+            <input type="number" id="resetExpiry" value="12" min="1">
+          </div>
+        </div>
+      </section>
+      
+      <!-- Studio Library Page -->
+      <section class="page" id="templatesPage">
+        <div class="page-header">
+          <h2>Studio</h2>
+          <div class="header-actions">
+            <button class="btn btn-secondary active" id="btnMyTemplates" onclick="showMyTemplates()">My Templates</button>
+            <button class="btn btn-secondary" id="btnSystemTemplates" onclick="showSystemTemplates()">System Templates</button>
+            <button class="btn btn-primary" onclick="showCreateTemplateModal()">Create Template</button>
+          </div>
+        </div>
+        
+        <div class="studio-filters">
+          <input type="text" id="studioSearch" placeholder="Search templates..." onkeyup="filterStudioTemplates()">
+          <select id="studioCategoryFilter" onchange="filterStudioTemplates()">
+            <option value="all">All Categories</option>
+          </select>
+        </div>
+
+        <div class="templates-list templates-grid" id="templatesList">
+          <!-- Templates will be rendered here -->
+        </div>
+      </section>
+
+      <!-- Studio Editor Page -->
+      <section class="page" id="studioEditorPage">
+        <div class="editor-topbar">
+          <button class="btn btn-link" onclick="closeStudioEditor()">← Back to Library</button>
+          <div class="editor-title">
+            <strong id="editorTemplateName">Template Name</strong>
+            <span class="status-pill" id="editorTemplateStatus">Draft</span>
+          </div>
+          <div class="editor-actions">
+            <button class="btn btn-secondary" onclick="toggleEditorMode()" id="btnEditorMode">Code Mode</button>
+            <button class="btn btn-secondary" onclick="previewTemplate()">Preview</button>
+            <button class="btn btn-secondary" onclick="duplicateTemplate()">Duplicate</button>
+            <button class="btn btn-primary" onclick="saveTemplate()" id="btnSaveTemplate">Save</button>
+          </div>
+        </div>
+        
+        <div class="editor-workspace">
+          <div class="editor-sidebar" id="editorSidebar">
+            <h3>Variables</h3>
+            <ul id="editorVariablesList" class="variables-list">
+              <!-- Variables listed here -->
+            </ul>
+            <p class="help-text" style="font-size:0.8rem;color:#888;">Variables format: {{var}}</p>
+          </div>
+          
+          <div class="editor-canvas">
+            <div id="visualEditorContainer" class="editor-container active">
+              <iframe id="visualEditorFrame" sandbox="allow-same-origin allow-scripts" style="width:100%;height:100%;border:none;background:white;"></iframe>
+            </div>
+            <div id="codeEditorContainer" class="editor-container" style="display:none;width:100%;height:100%;">
+              <textarea id="codeEditorTextarea" class="code-editor" spellcheck="false" style="width:100%;height:100%;font-family:monospace;padding:15px;border:1px solid #ddd;"></textarea>
+            </div>
+          </div>
+          
+          <div class="editor-properties" id="editorProperties">
+            <h3>Properties</h3>
+            <div class="form-group">
+              <label>Subject</label>
+              <input type="text" id="editorSubject">
+            </div>
+            <div class="form-group" id="editorNameGroup">
+              <label>Name</label>
+              <input type="text" id="editorName">
+            </div>
+            <div class="form-group" id="editorTypeGroup">
+              <label>Type</label>
+              <select id="editorType">
+                <option value="transactional">Transactional</option>
+                <option value="marketing">Marketing</option>
+                <option value="verification">Verification</option>
+                <option value="password-reset">Password Reset</option>
+                <option value="notification">Notification</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="useTemplateInCampaign()" id="btnUseTemplate" style="width:100%; margin-top:20px;">Use in Campaign</button>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Newsletter Page -->
+      <section class="page" id="newsletterPage">
+        <div class="page-header">
+          <h2>Newsletter</h2>
+        </div>
+        
+        <div class="newsletter-controls">
+          <button class="btn btn-primary" onclick="createCampaign()">Create Campaign</button>
+          <select id="campaignSelect">
+            <option>Select campaign...</option>
+          </select>
+        </div>
+        
+        <div class="campaigns-list" id="campaignsList">
+          <!-- Campaigns will be rendered here -->
+        </div>
+        
+        <div class="subscribers-section">
+          <h3>Subscribers</h3>
+          <button class="btn btn-secondary" onclick="showAddSubscriberModal()">Add Subscriber</button>
+          <ul id="subscribersList">
+            <!-- Subscribers will be rendered here -->
+          </ul>
+        </div>
+      </section>
+      
+      <!-- Domains Page -->
+      <section class="page" id="domainsPage">
+        <div class="page-header">
+          <h2>Domains</h2>
+        </div>
+        
+        <div class="domains-config">
+          <div class="form-group">
+            <label>Domain</label>
+            <input type="text" id="newDomain" placeholder="example.com">
+          </div>
+          <button class="btn btn-primary" onclick="addDomain()">Add Domain</button>
+        </div>
+        
+        <div class="domains-list" id="domainsList">
+          <!-- Domains will be rendered here -->
+        </div>
+      </section>
+      
+      <!-- Subscribers Page -->
+      <section class="page" id="subscribersPage">
+        <div class="page-header">
+          <h2>Subscribers</h2>
+        </div>
+        
+        <div class="subscribers-list" id="subscribersListPage">
+          <!-- Subscribers will be rendered here -->
+        </div>
+      </section>
+      
+      <!-- Logs Page -->
+      <section class="page" id="logsPage">
+        <div class="page-header">
+          <h2>Logs</h2>
+        </div>
+        
+        <div class="logs-filters">
+          <select id="logFilterType" onchange="filterLogs()">
+            <option value="all">All types</option>
+            <option value="email">Email</option>
+            <option value="verification">Verification</option>
+            <option value="password-reset">Password Reset</option>
+            <option value="newsletter">Newsletter</option>
+          </select>
+          <select id="logFilterProject" onchange="filterLogs()">
+            <option value="all">All projects</option>
+          </select>
+          <input type="text" id="logSearch" placeholder="Search logs..." oninput="filterLogs()">
+        </div>
+        
+        <div class="logs-list" id="logsList">
+          <!-- Logs will be rendered here -->
+        </div>
+      </section>
+      
+      <!-- Analytics Page -->
+      <section class="page" id="analyticsPage">
+        <div class="page-header">
+          <h2>Analytics</h2>
+        </div>
+        
+        <div class="analytics-filters">
+          <select id="analyticsFilterPeriod" onchange="loadAnalytics()">
+            <option value="24h">24 hours</option>
+            <option value="7d">7 days</option>
+            <option value="30d">30 days</option>
+            <option value="90d">90 days</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        
+        <div class="charts-section">
+          <div class="chart-card">
+            <canvas id="sentChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <canvas id="deliveredChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <canvas id="bouncedChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <canvas id="openedChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <canvas id="clickedChart"></canvas>
+          </div>
+        </div>
+        
+        <div class="activity-summary">
+          <h3>Activity Summary</h3>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <div class="summary-value" id="totalSent">0</div>
+              <div class="summary-label">Sent</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-value" id="totalDelivered">0</div>
+              <div class="summary-label">Delivered</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-value" id="totalOpened">0</div>
+              <div class="summary-label">Opened</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-value" id="totalClicked">0</div>
+              <div class="summary-label">Clicked</div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Settings Page -->
+      <section class="page" id="settingsPage">
+        <div class="page-header">
+          <h2>Settings</h2>
+        </div>
+        
+        <div class="settings-sections">
+          <div class="setting-section general">
+            <h3>General</h3>
+            <div class="setting-row">
+              <span>Demo/Local Mode</span>
+              <input type="checkbox" id="demoMode" disabled>
+            </div>
+          </div>
+          
+          <div class="setting-section api">
+            <h3>API</h3>
+            <div class="setting-row">
+              <span>API Rate Limit (requests/min)</span>
+              <input type="number" id="apiRateLimit" value="100" min="1">
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  
+  <!-- Create Project Modal -->
+  <div id="createProjectModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="hideCreateProjectModal()">&times;</span>
+      <h3>Create Project</h3>
+      <form onsubmit="createProject(event)">
+        <div class="form-group">
+          <label>Project Name</label>
+          <input type="text" id="newProjectName" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Create</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Create Template Modal -->
+  <div id="createTemplateModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="hideCreateTemplateModal()">&times;</span>
+      <h3>Create Template</h3>
+      <form onsubmit="createTemplate(event)">
+        <div class="form-group">
+          <label>Template Name</label>
+          <input type="text" id="newTemplateName" required>
+        </div>
+        <div class="form-group">
+          <label>Template Type</label>
+          <select id="templateType" required>
+            <option value="verification">Verification</option>
+            <option value="password-reset">Password Reset</option>
+            <option value="welcome">Welcome</option>
+            <option value="security-alert">Security Alert</option>
+            <option value="newsletter">Newsletter</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Create</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Add Subscriber Modal -->
+  <div id="addSubscriberModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="hideAddSubscriberModal()">&times;</span>
+      <h3>Add Subscriber</h3>
+      <form onsubmit="addSubscriber(event)">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="subscriberName" required>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="subscriberEmail" required>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="subscriberStatus" required>
+            <option value="subscribed">Subscribed</option>
+            <option value="unsubscribed">Unsubscribed</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Add</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Campaign Creation Modal -->
+  <div id="createCampaignModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="hideCreateCampaignModal()">&times;</span>
+      <h3>Create Campaign</h3>
+      <form onsubmit="createCampaign(event)">
+        <div class="form-group">
+          <label>Campaign Name</label>
+          <input type="text" id="campaignName" required>
+        </div>
+        <div class="form-group">
+          <label>Subject</label>
+          <input type="text" id="campaignSubject" required>
+        </div>
+        <div class="form-group">
+          <label>From Name</label>
+          <input type="text" id="campaignFromName" required>
+        </div>
+        <div class="form-group">
+          <label>From Email</label>
+          <input type="email" id="campaignFromEmail" required>
+        </div>
+        <div class="form-group">
+          <label>Reply-To</label>
+          <input type="email" id="campaignReplyTo">
+        </div>
+        <div class="form-group">
+          <label>Template</label>
+          <select id="campaignTemplate" required>
+            <option value="verification">Verification</option>
+            <option value="password-reset">Password Reset</option>
+            <option value="welcome">Welcome</option>
+            <option value="security-alert">Security Alert</option>
+            <option value="newsletter">Newsletter</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Create</button>
+      </form>
+    </div>
+  </div>
+  
+  <script src="app.js"></script>
+</body>
+</html>

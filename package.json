@@ -1,0 +1,67 @@
+{
+  "name": "mailix",
+  "version": "2.0.0",
+  "description": "Production-grade email infrastructure for developers",
+  "main": "server/server.js",
+  "bin": {
+    "mlx": "./cli/mlx.js",
+    "mlx-install": "./cli/mlx.js",
+    "mlx-run": "./cli/mlx.js",
+    "mailix": "./cli/mlx.js",
+    "mailix-run": "./cli/mlx.js"
+  },
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js",
+    "cli": "node cli/mlx.js",
+    "test": "node tests/test.js && node tests/zero-node.test.js && node tests/icon.test.js && node tests/release.test.js && node tests/secrets.test.js && node tests/studio.test.js",
+    "test:unit": "node tests/test.js",
+    "test:zero-node": "node tests/zero-node.test.js",
+    "test:icon": "node tests/icon.test.js",
+    "test:release": "node tests/release.test.js",
+    "test:secrets": "node tests/secrets.test.js",
+    "validate-icon": "node scripts/validate-icon.js",
+    "scan-secrets": "node scripts/scan-secrets.js",
+    "build": "echo 'No build step required for source. For release artifacts: npm run build:release' && exit 0",
+    "build:release": "node scripts/build-release.js",
+    "build:installer": "node scripts/build-installer.js",
+    "release": "node scripts/release.js",
+    "lint": "node -c server/server.js && node -c cli/mlx.js",
+    "link": "npm link"
+  },
+  "keywords": [
+    "email",
+    "infrastructure",
+    "transactional",
+    "verification",
+    "password-reset",
+    "newsletter",
+    "smtp",
+    "ses",
+    "resend",
+    "mlx"
+  ],
+  "author": "its_viyan",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "nodemailer": "^6.9.7",
+    "uuid": "^9.0.1"
+  },
+  "optionalDependencies": {
+    "aws-sdk": "^2.1466.0",
+    "ioredis": "^5.3.2",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "rcedit": "^5.0.2"
+  }
+}

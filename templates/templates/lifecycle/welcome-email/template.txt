@@ -1,0 +1,34 @@
+WELCOME TO {{company.name}}
+
+Welcome, {{user.firstName}}.
+
+We're thrilled to have you as part of our growing community.
+
+You're now part of a platform built to help you accomplish more. Whether you're just getting started or you're an experienced professional, we've designed every detail with you in mind.
+
+Over the next few days, we'll send you some useful resources to help you get the most out of {{company.name}}. In the meantime, here's what you can do right now:
+
+1. COMPLETE YOUR PROFILE
+
+Add a profile photo and bio so others can learn more about you.
+
+2. EXPLORE THE BASICS
+
+Check out our Getting Started guide to learn the core features.
+
+3. CONNECT WITH US
+
+Join our community and never miss an update from {{company.name}}.
+
+GET STARTED
+{{company.website}}
+
+---
+
+Questions? We're here to help.
+Contact support: {{company.supportEmail}}
+
+{{company.name}}
+{{company.website}}
+Unsubscribe: {{unsubscribe.url}}
+Email preferences: {{preferences.url}}

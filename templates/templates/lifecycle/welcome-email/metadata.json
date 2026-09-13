@@ -1,0 +1,64 @@
+{
+  "id": "welcome-email",
+  "name": "Welcome Email",
+  "slug": "welcome-email",
+  "category": "lifecycle",
+  "designFamily": "editorial",
+  "subject": "Welcome to {{company.name}}",
+  "previewText": "Get started with your new account",
+  "description": "Elegant welcome email with sophisticated typography and three-step onboarding guidance.",
+  "features": [
+    "Warm greeting",
+    "Numbered steps",
+    "Call-to-action",
+    "Editorial styling",
+    "Next steps guidance",
+    "Support contact"
+  ],
+  "variables": [
+    "company.name",
+    "company.logoUrl",
+    "company.primaryColor",
+    "company.website",
+    "company.supportEmail",
+    "user.firstName",
+    "unsubscribe.url",
+    "preferences.url"
+  ],
+  "colors": {
+    "background": "#FAFAFA",
+    "cardBackground": "#FFFFFF",
+    "textPrimary": "#111827",
+    "textSecondary": "#4B5563",
+    "textTertiary": "#6B7280",
+    "borderColor": "#E5E7EB",
+    "accentColor": "#3B82F6"
+  },
+  "typography": {
+    "headingFont": "Georgia, serif",
+    "bodyFont": "Georgia, serif",
+    "sansSerifFont": "system-ui",
+    "headingSize": "42px",
+    "headingWeight": "400",
+    "bodySize": "16px",
+    "lineHeight": "1.8"
+  },
+  "responsive": true,
+  "emailClientCompatibility": {
+    "gmail": "Fully compatible",
+    "outlookWindows": "Fully compatible",
+    "outlookMac": "Fully compatible",
+    "appleMail": "Fully compatible",
+    "iosMail": "Fully compatible",
+    "androidMail": "Fully compatible"
+  },
+  "accessibility": {
+    "altText": true,
+    "colorContrast": "WCAG AA compliant",
+    "semanticMarkup": true,
+    "headingHierarchy": "proper"
+  },
+  "useCase": "Send this template to new users after account activation. Provides warm welcome, introduces platform value, and guides users toward key first actions.",
+  "customizationGuide": "Modify the three steps section to match your actual onboarding flow. Update copy to reflect your platform's specific features. Customize colors to match your brand identity.",
+  "engagementStrategy": "Use serif typography for elegance. Include numbered steps for clarity. Strong visual hierarchy guides users to next actions. This template is designed for retention and engagement."
+}

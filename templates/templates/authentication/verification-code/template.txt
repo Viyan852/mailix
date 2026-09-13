@@ -1,0 +1,21 @@
+SECURITY CODE
+
+YOUR VERIFICATION CODE
+
+{{verification.code}}
+
+Enter this code to complete your authentication. This code is valid for {{verification.expiresIn}}.
+
+---
+
+🔒 Security Tip:
+
+Never share this code with anyone. {{company.name}} support will never ask for it.
+
+---
+
+Didn't request this? Ignore this email if you didn't attempt to sign in.
+
+{{company.name}}
+{{company.website}}
+Questions? Contact support: {{company.supportEmail}}

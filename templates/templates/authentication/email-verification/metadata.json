@@ -1,0 +1,62 @@
+{
+  "id": "email-verification",
+  "name": "Email Verification",
+  "slug": "email-verification",
+  "category": "authentication",
+  "designFamily": "mailix-core",
+  "subject": "Verify your email address",
+  "previewText": "Confirm your email to complete setup",
+  "description": "Clean, professional email verification template with prominent CTA button and security-focused messaging.",
+  "features": [
+    "Primary CTA button",
+    "Link fallback",
+    "Security reassurance message",
+    "Expiration notice",
+    "Support contact",
+    "Unsubscribe options"
+  ],
+  "variables": [
+    "company.name",
+    "company.logoUrl",
+    "company.primaryColor",
+    "company.website",
+    "company.supportEmail",
+    "user.firstName",
+    "verification.url",
+    "verification.expiresIn",
+    "unsubscribe.url",
+    "preferences.url"
+  ],
+  "colors": {
+    "background": "#F9FAFB",
+    "cardBackground": "#FFFFFF",
+    "textPrimary": "#111827",
+    "textSecondary": "#6B7280",
+    "textTertiary": "#9CA3AF",
+    "borderColor": "#E5E7EB",
+    "accentColor": "{{company.primaryColor}}"
+  },
+  "typography": {
+    "headingFont": "system-ui",
+    "bodyFont": "system-ui",
+    "headingSize": "24px",
+    "bodySize": "16px",
+    "lineHeight": "1.6"
+  },
+  "responsive": true,
+  "emailClientCompatibility": {
+    "gmail": "Fully compatible",
+    "outlookWindows": "Fully compatible",
+    "outlookMac": "Fully compatible",
+    "appleMail": "Fully compatible",
+    "iosMail": "Fully compatible",
+    "androidMail": "Fully compatible"
+  },
+  "accessibility": {
+    "altText": true,
+    "colorContrast": "WCAG AA compliant",
+    "semanticMarkup": true
+  },
+  "useCase": "Send this template when a user signs up or adds a new email address to verify ownership.",
+  "customizationGuide": "Update company.primaryColor to match your brand. Customize the greeting message if needed. Adjust verification expiration time as appropriate for your security requirements."
+}
