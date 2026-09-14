@@ -1,0 +1,58 @@
+name: MAILIX macOS Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  macos:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build MAILIX
+        run: node scripts/release.js
+
+      - name: Show output
+        run: |
+          echo "=== DIST ==="
+          find dist -maxdepth 4 -type f | sort
+
+      - name: Create ZIP
+        run: |
+          mkdir -p release
+          cd dist
+          zip -r ../release/mailix-macos.zip ./*
+          
+      - name: Generate checksum
+        run: |
+          cd release
+          shasum -a 256 mailix-macos.zip > SHA256SUMS.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mailix-macos
+          path: release/
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: MAILIX ${{ github.ref_name }} - macOS
+          files: |
+            release/mailix-macos.zip
+            release/SHA256SUMS.txt
