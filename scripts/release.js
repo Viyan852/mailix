@@ -2,23 +2,27 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('child_process');
+const crypto = require('crypto');
+const { execSync, execFileSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
+const PACKAGE_JSON = path.join(ROOT, 'package.json');
 
 function readPackageVersion() {
-  const packagePath = path.join(ROOT, 'package.json');
-  const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+  const packageJson = JSON.parse(
+    fs.readFileSync(PACKAGE_JSON, 'utf8')
+  );
 
-  if (!pkg.version) {
+  if (!packageJson.version) {
     throw new Error('package.json does not contain a version.');
   }
 
-  return pkg.version;
+  return packageJson.version;
 }
 
 const VERSION = readPackageVersion();
+
 const IS_WINDOWS = process.platform === 'win32';
 const IS_MACOS = process.platform === 'darwin';
 
@@ -34,28 +38,38 @@ function run(command, args = []) {
   });
 }
 
-function checkGitClean() {
+/**
+ * Verify that the Git working tree is clean.
+ *
+ * Release MUST NOT continue with uncommitted changes.
+ */
+function checkGitWorkingTree() {
   try {
-    const status = execFileSync(
-      'git',
-      ['status', '--porcelain'],
+    const status = execSync(
+      'git status --porcelain',
       {
         cwd: ROOT,
         encoding: 'utf8'
       }
     ).trim();
 
-    if (status) {
+    if (status.length > 0) {
       throw new Error(
         'Release aborted: uncommitted changes detected. Commit or stash all changes before releasing.'
       );
     }
+
+    console.log('✓ Working tree clean');
   } catch (error) {
-    if (error.message.includes('uncommitted changes')) {
+    if (
+      error.message &&
+      error.message.includes('uncommitted changes')
+    ) {
       throw error;
     }
 
-    console.log('⚠ Git repository check skipped.');
+    // A source archive without Git is allowed.
+    console.log('⚠ Git working-tree check skipped.');
   }
 }
 
@@ -74,14 +88,16 @@ function validateIcon() {
     throw new Error('assets/icon.ico is empty.');
   }
 
-  console.log(`✓ Icon OK (${(size / 1024).toFixed(1)} KB)`);
+  console.log(
+    `✓ Icon OK (${(size / 1024).toFixed(1)} KB)`
+  );
 }
 
 function runTests() {
   console.log('→ Running tests…');
 
   run(
-    process.platform === 'win32' ? 'npm.cmd' : 'npm',
+    IS_WINDOWS ? 'npm.cmd' : 'npm',
     ['test']
   );
 
@@ -89,25 +105,43 @@ function runTests() {
 }
 
 function runSecretScan() {
-  const scanner = path.join(ROOT, 'tests', 'secrets.test.js');
+  const scanner = path.join(
+    ROOT,
+    'tests',
+    'secrets.test.js'
+  );
 
   if (!exists(scanner)) {
     return;
   }
 
   console.log('→ Running secret scanner…');
+
   run(process.execPath, [scanner]);
+
   console.log('✓ Secret scan passed');
 }
 
+/**
+ * Detect the macOS target supported by build-release.js.
+ */
 function detectMacOSTarget() {
-  const builder = path.join(ROOT, 'scripts', 'build-release.js');
+  const builder = path.join(
+    ROOT,
+    'scripts',
+    'build-release.js'
+  );
 
   if (!exists(builder)) {
-    throw new Error('scripts/build-release.js not found.');
+    throw new Error(
+      'scripts/build-release.js not found.'
+    );
   }
 
-  const source = fs.readFileSync(builder, 'utf8');
+  const source = fs.readFileSync(
+    builder,
+    'utf8'
+  );
 
   const targets = [
     'macos-universal',
@@ -123,7 +157,8 @@ function detectMacOSTarget() {
   for (const target of targets) {
     if (
       source.includes(`'${target}'`) ||
-      source.includes(`"${target}"`)
+      source.includes(`"${target}"`) ||
+      source.includes(target)
     ) {
       return target;
     }
@@ -135,10 +170,16 @@ function detectMacOSTarget() {
 }
 
 function buildRelease() {
-  const builder = path.join(ROOT, 'scripts', 'build-release.js');
+  const builder = path.join(
+    ROOT,
+    'scripts',
+    'build-release.js'
+  );
 
   if (!exists(builder)) {
-    throw new Error('scripts/build-release.js not found.');
+    throw new Error(
+      'scripts/build-release.js not found.'
+    );
   }
 
   let target;
@@ -166,24 +207,45 @@ function buildRelease() {
 
 function locateBuildDir(target) {
   const candidates = [
-    path.join(DIST, 'build', `mailix-${target}-v${VERSION}`),
-    path.join(DIST, `mailix-${target}-v${VERSION}`),
-    path.join(DIST, 'build', `mailix-${target}`),
-    path.join(DIST, `mailix-${target}`)
+    path.join(
+      DIST,
+      'build',
+      `mailix-${target}-v${VERSION}`
+    ),
+    path.join(
+      DIST,
+      `mailix-${target}`
+    ),
+    path.join(
+      DIST,
+      `build`,
+      `mailix-${target}`
+    ),
+    path.join(
+      DIST,
+      `mailix-${target}-v${VERSION}`
+    )
   ];
 
-  for (const dir of candidates) {
-    if (exists(dir) && fs.statSync(dir).isDirectory()) {
-      return dir;
+  for (const directory of candidates) {
+    if (
+      exists(directory) &&
+      fs.statSync(directory).isDirectory()
+    ) {
+      return directory;
     }
   }
 
-  const buildDir = path.join(DIST, 'build');
+  const buildDirectory = path.join(
+    DIST,
+    'build'
+  );
 
-  if (exists(buildDir)) {
-    const entries = fs.readdirSync(buildDir, {
-      withFileTypes: true
-    });
+  if (exists(buildDirectory)) {
+    const entries = fs.readdirSync(
+      buildDirectory,
+      { withFileTypes: true }
+    );
 
     const match = entries.find(
       entry =>
@@ -192,7 +254,10 @@ function locateBuildDir(target) {
     );
 
     if (match) {
-      return path.join(buildDir, match.name);
+      return path.join(
+        buildDirectory,
+        match.name
+      );
     }
   }
 
@@ -201,11 +266,28 @@ function locateBuildDir(target) {
   );
 }
 
-function verifyRuntime(buildDir) {
-  const runtimeName = IS_WINDOWS ? 'node.exe' : 'node';
-  const runtime = path.join(buildDir, 'runtime', runtimeName);
+/**
+ * Verify the bundled Node.js runtime.
+ *
+ * MAILIX is Zero-Node, so a release without its bundled
+ * runtime is invalid.
+ */
+function verifyBundledRuntime(buildDir) {
+  console.log(
+    '→ Verifying bundled Node.js runtime…'
+  );
 
-  console.log('→ Verifying bundled Node.js runtime…');
+  const runtime = IS_WINDOWS
+    ? path.join(
+        buildDir,
+        'runtime',
+        'node.exe'
+      )
+    : path.join(
+        buildDir,
+        'runtime',
+        'node'
+      );
 
   if (!exists(runtime)) {
     throw new Error(
@@ -213,21 +295,36 @@ function verifyRuntime(buildDir) {
     );
   }
 
-  if (!IS_WINDOWS) {
-    const stat = fs.statSync(runtime);
+  const stat = fs.statSync(runtime);
 
-    if ((stat.mode & 0o111) === 0) {
-      fs.chmodSync(runtime, stat.mode | 0o755);
-    }
+  if (!stat.isFile()) {
+    throw new Error(
+      `Release validation failed: bundled Node.js runtime is not a file: ${runtime}`
+    );
   }
 
-  console.log('✓ Bundled Node.js runtime found');
+  if (!IS_WINDOWS && (stat.mode & 0o111) === 0) {
+    fs.chmodSync(
+      runtime,
+      stat.mode | 0o755
+    );
+  }
+
+  console.log(
+    `✓ Bundled Node.js runtime found: ${path.relative(ROOT, runtime)}`
+  );
 }
 
 function verifyBuiltIcon(buildDir) {
-  const icon = path.join(buildDir, 'assets', 'icon.ico');
+  console.log(
+    '→ Verifying release icon…'
+  );
 
-  console.log('→ Verifying release icon…');
+  const icon = path.join(
+    buildDir,
+    'assets',
+    'icon.ico'
+  );
 
   if (!exists(icon)) {
     throw new Error(
@@ -235,18 +332,42 @@ function verifyBuiltIcon(buildDir) {
     );
   }
 
+  if (fs.statSync(icon).size <= 0) {
+    throw new Error(
+      `Release validation failed: icon is empty: ${icon}`
+    );
+  }
+
   console.log('✓ Release icon found');
 }
 
-function createPortableZip(buildDir, target) {
-  const name = `mailix-${target}-v${VERSION}.zip`;
-  const output = path.join(DIST, name);
+function createPortableZip(
+  buildDir,
+  target
+) {
+  const filename =
+    `mailix-${target}-v${VERSION}.zip`;
+
+  const output = path.join(
+    DIST,
+    filename
+  );
+
+  fs.mkdirSync(
+    DIST,
+    { recursive: true }
+  );
 
   if (exists(output)) {
-    fs.rmSync(output, { force: true });
+    fs.rmSync(
+      output,
+      { force: true }
+    );
   }
 
-  console.log(`→ Creating ${name}…`);
+  console.log(
+    `→ Creating ${filename}…`
+  );
 
   if (IS_WINDOWS) {
     run('powershell', [
@@ -265,38 +386,56 @@ function createPortableZip(buildDir, target) {
     ]);
   }
 
-  console.log(`✓ Created ${path.relative(ROOT, output)}`);
+  console.log(
+    `✓ Created ${path.relative(ROOT, output)}`
+  );
 
   return output;
 }
 
+/**
+ * Windows installer is optional.
+ *
+ * macOS NEVER attempts to run the Windows NSIS installer.
+ */
 function buildInstaller(buildDir) {
   if (!IS_WINDOWS) {
     return null;
   }
 
-  const installer = path.join(
+  const installerScript = path.join(
     ROOT,
     'scripts',
     'build-installer.js'
   );
 
-  if (!exists(installer)) {
-    console.log('⚠ Windows installer builder not found. Skipping.');
+  if (!exists(installerScript)) {
+    console.log(
+      '⚠ Windows installer builder not found. Skipping.'
+    );
+
     return null;
   }
 
-  console.log('→ Building MAILIX-Setup-x64.exe…');
+  console.log(
+    '→ Building MAILIX-Setup-x64.exe…'
+  );
 
   try {
     run(process.execPath, [
-      installer,
+      installerScript,
       `--source=${buildDir}`,
       `--version=${VERSION}`
     ]);
   } catch (error) {
-    console.log('⚠ Windows installer build skipped.');
-    console.log(error.message);
+    console.log(
+      '⚠ Windows installer build skipped.'
+    );
+
+    console.log(
+      error.message
+    );
+
     return null;
   }
 
@@ -305,12 +444,26 @@ function buildInstaller(buildDir) {
     'MAILIX-Setup-x64.exe'
   );
 
-  return exists(output) ? output : null;
+  if (!exists(output)) {
+    console.log(
+      '⚠ Windows installer was not produced. Continuing with portable release.'
+    );
+
+    return null;
+  }
+
+  console.log(
+    `✓ Created ${path.basename(output)}`
+  );
+
+  return output;
 }
 
 function generateChecksums(files) {
-  const crypto = require('crypto');
-  const checksumFile = path.join(DIST, 'SHA256SUMS');
+  const checksumFile = path.join(
+    DIST,
+    'SHA256SUMS'
+  );
 
   const lines = files
     .filter(Boolean)
@@ -318,11 +471,19 @@ function generateChecksums(files) {
     .map(file => {
       const hash = crypto
         .createHash('sha256')
-        .update(fs.readFileSync(file))
+        .update(
+          fs.readFileSync(file)
+        )
         .digest('hex');
 
       return `${hash}  ${path.basename(file)}`;
     });
+
+  if (lines.length === 0) {
+    throw new Error(
+      'No release artifacts available for SHA256SUMS.'
+    );
+  }
 
   fs.writeFileSync(
     checksumFile,
@@ -339,34 +500,40 @@ function generateChecksums(files) {
 
 function gitTagAndPush() {
   try {
-    execFileSync(
-      'git',
-      ['rev-parse', '--is-inside-work-tree'],
+    execSync(
+      'git rev-parse --is-inside-work-tree',
       {
         cwd: ROOT,
         stdio: 'ignore'
       }
     );
   } catch {
-    console.log('⚠ Not a Git repository. Skipping Git release.');
+    console.log(
+      '⚠ Not a Git repository. Skipping Git release.'
+    );
+
     return;
   }
 
   const tag = `v${VERSION}`;
 
   try {
-    execFileSync(
-      'git',
-      ['rev-parse', tag],
+    execSync(
+      `git rev-parse ${tag}`,
       {
         cwd: ROOT,
         stdio: 'ignore'
       }
     );
 
-    console.log(`✓ ${tag} already exists. Not recreating it.`);
+    console.log(
+      `✓ ${tag} already exists. Not recreating it.`
+    );
+
     return;
-  } catch {}
+  } catch {
+    // Tag does not exist.
+  }
 
   try {
     run('git', [
@@ -377,58 +544,116 @@ function gitTagAndPush() {
       `MAILIX ${tag}`
     ]);
 
-    run('git', ['push', 'origin', tag]);
+    run('git', [
+      'push',
+      'origin',
+      tag
+    ]);
 
-    console.log(`✓ Published ${tag}`);
+    console.log(
+      `✓ Published ${tag}`
+    );
   } catch (error) {
-    console.log('⚠ Git release step skipped.');
-    console.log(error.message);
+    console.log(
+      '⚠ Git release step skipped.'
+    );
+
+    console.log(
+      error.message
+    );
   }
 }
 
 function main() {
-  console.log('\nMAILIX Release Orchestrator\n');
-  console.log(`→ Version: ${VERSION}`);
+  console.log(
+    '\nMAILIX Release Orchestrator\n'
+  );
 
-  if (!IS_WINDOWS && !IS_MACOS) {
+  console.log(
+    `→ Version: ${VERSION}`
+  );
+
+  console.log(
+    `→ Platform: ${process.platform}`
+  );
+
+  if (
+    !IS_WINDOWS &&
+    !IS_MACOS
+  ) {
     throw new Error(
-      `Unsupported platform: ${process.platform}`
+      `Unsupported release platform: ${process.platform}`
     );
   }
 
-  checkGitClean();
+  checkGitWorkingTree();
+
   validateIcon();
+
   runTests();
+
   runSecretScan();
 
-  const target = buildRelease();
-  const buildDir = locateBuildDir(target);
+  const target =
+    buildRelease();
 
-  console.log(`✓ Build found: ${buildDir}`);
+  const buildDir =
+    locateBuildDir(target);
 
-  verifyRuntime(buildDir);
-  verifyBuiltIcon(buildDir);
-
-  const zip = createPortableZip(
-    buildDir,
-    target
+  console.log(
+    `✓ Build found: ${buildDir}`
   );
 
-  const installer = buildInstaller(buildDir);
+  verifyBundledRuntime(
+    buildDir
+  );
 
-  generateChecksums([
-    zip,
-    installer
-  ]);
+  verifyBuiltIcon(
+    buildDir
+  );
+
+  const zip =
+    createPortableZip(
+      buildDir,
+      target
+    );
+
+  const installer =
+    buildInstaller(
+      buildDir
+    );
+
+  const checksum =
+    generateChecksums([
+      zip,
+      installer
+    ]);
 
   gitTagAndPush();
 
-  console.log('\n========================================');
-  console.log('       MAILIX RELEASE COMPLETE');
-  console.log('========================================');
-  console.log(`Version: ${VERSION}`);
-  console.log(`Target: ${target}`);
-  console.log(`ZIP: ${path.basename(zip)}`);
+  console.log(
+    '\n========================================'
+  );
+
+  console.log(
+    '       MAILIX RELEASE COMPLETE'
+  );
+
+  console.log(
+    '========================================'
+  );
+
+  console.log(
+    `Version: ${VERSION}`
+  );
+
+  console.log(
+    `Target: ${target}`
+  );
+
+  console.log(
+    `ZIP: ${path.basename(zip)}`
+  );
 
   if (installer) {
     console.log(
@@ -436,14 +661,25 @@ function main() {
     );
   }
 
-  console.log('Checksums: SHA256SUMS');
-  console.log('========================================\n');
+  console.log(
+    `Checksums: ${path.basename(checksum)}`
+  );
+
+  console.log(
+    '========================================\n'
+  );
 }
 
 try {
   main();
 } catch (error) {
-  console.error('\n✗ Release failed.');
-  console.error(error.message);
+  console.error(
+    '\n✗ Release failed.'
+  );
+
+  console.error(
+    error.message
+  );
+
   process.exit(1);
 }
