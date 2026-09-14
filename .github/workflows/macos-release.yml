@@ -56,4 +56,4 @@ jobs:
           files: |
             release/mailix-macos.zip
             release/SHA256SUMS.txt
-```
+
