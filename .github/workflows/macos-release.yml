@@ -1,4 +1,4 @@
-name: MAILIX macOS Release
+name: MAILIX macOS Universal Release
 
 on:
   workflow_dispatch:
@@ -10,13 +10,15 @@ permissions:
   contents: write
 
 jobs:
-  macos:
-    name: Build MAILIX for macOS
+  macos-universal:
+    name: MAILIX macOS Universal
     runs-on: macos-14
 
     steps:
-      - name: Checkout repository
+      - name: Checkout MAILIX
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js 20
         uses: actions/setup-node@v5
@@ -27,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Read MAILIX version
+      - name: Read version
         id: version
         shell: bash
         run: |
@@ -35,86 +37,173 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "MAILIX version: $VERSION"
 
-      # Do NOT run the old release.test.js suite here.
-      # That suite validates release.js, which is intentionally
-      # not used by the macOS release pipeline.
+      # Run all normal tests except the old release-script tests.
       - name: Run core tests
         shell: bash
         run: |
-          npm test -- --test-name-pattern='^(?!.*release)'
+          npm run test:unit
+          npm run test:zero-node
+          npm run test:icon
+          npm run test:secrets
+          npm run test:studio
 
       - name: Build macOS universal release
         shell: bash
         run: |
           VERSION="${{ steps.version.outputs.version }}"
 
+          rm -rf dist
+
           node scripts/build-release.js \
             --platform=macos-universal \
-            --version="$VERSION"
+            --out=dist
 
-      - name: Find macOS build
-        id: build
+      - name: Verify release directory
+        id: release
         shell: bash
         run: |
           VERSION="${{ steps.version.outputs.version }}"
+          RELEASE_DIR="dist/mailix-macos-universal-v${VERSION}"
 
-          for DIR in \
-            "dist/build/mailix-macos-universal-v${VERSION}" \
-            "dist/mailix-macos-universal-v${VERSION}" \
-            "dist/build/mailix-macos-universal" \
-            "dist/mailix-macos-universal"
-          do
-            if [ -d "$DIR" ]; then
-              echo "Found macOS build:"
-              echo "$DIR"
-              echo "dir=$DIR" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-          done
+          if [ ! -d "$RELEASE_DIR" ]; then
+            echo "ERROR: Release directory was not created:"
+            echo "$RELEASE_DIR"
+            echo ""
+            echo "dist contents:"
+            find dist -maxdepth 5 -print || true
+            exit 1
+          fi
 
-          echo "ERROR: Could not find macOS build."
+          echo "release_dir=$RELEASE_DIR" >> "$GITHUB_OUTPUT"
 
-          echo ""
-          echo "Available dist files:"
-          find dist -maxdepth 5 -print 2>/dev/null || true
+          echo "Release directory:"
+          echo "$RELEASE_DIR"
 
-          exit 1
+      - name: Verify MAILIX.app
+        shell: bash
+        run: |
+          RELEASE_DIR="${{ steps.release.outputs.release_dir }}"
+          APP="$RELEASE_DIR/MAILIX.app"
+
+          if [ ! -d "$APP" ]; then
+            echo "ERROR: MAILIX.app is missing."
+            exit 1
+          fi
+
+          echo "✓ MAILIX.app exists"
 
       - name: Verify bundled Node.js
         shell: bash
         run: |
-          BUILD="${{ steps.build.outputs.dir }}"
-          RUNTIME="$BUILD/runtime/node"
+          RELEASE_DIR="${{ steps.release.outputs.release_dir }}"
+          NODE="$RELEASE_DIR/MAILIX.app/Contents/Resources/runtime/bin/node"
 
-          echo "Checking:"
-          echo "$RUNTIME"
+          echo "Checking bundled Node:"
+          echo "$NODE"
 
-          if [ ! -f "$RUNTIME" ]; then
+          if [ ! -f "$NODE" ]; then
             echo "ERROR: Bundled Node.js runtime is missing."
+            echo ""
+            echo "Runtime directory:"
+            find "$RELEASE_DIR/MAILIX.app/Contents/Resources/runtime" \
+              -maxdepth 3 \
+              -print 2>/dev/null || true
             exit 1
           fi
 
-          chmod +x "$RUNTIME"
+          chmod +x "$NODE"
 
-          if [ ! -x "$RUNTIME" ]; then
-            echo "ERROR: Bundled Node.js runtime is not executable."
+          if [ ! -x "$NODE" ]; then
+            echo "ERROR: Bundled Node.js is not executable."
             exit 1
           fi
 
-          echo "Bundled Node.js runtime verified."
+          echo "✓ Bundled Node.js exists"
 
-      - name: Verify macOS application files
+      - name: Verify universal Node binary
         shell: bash
         run: |
-          BUILD="${{ steps.build.outputs.dir }}"
+          RELEASE_DIR="${{ steps.release.outputs.release_dir }}"
+          NODE="$RELEASE_DIR/MAILIX.app/Contents/Resources/runtime/bin/node"
 
-          if [ ! -d "$BUILD" ]; then
-            echo "ERROR: Build directory disappeared."
+          echo "Node binary architecture:"
+          file "$NODE"
+
+          echo ""
+          echo "lipo information:"
+          lipo -info "$NODE"
+
+          INFO="$(lipo -info "$NODE")"
+
+          if [[ "$INFO" != *"x86_64"* ]] || [[ "$INFO" != *"arm64"* ]]; then
+            echo ""
+            echo "ERROR: Node runtime is NOT universal."
+            echo "Expected both x86_64 and arm64."
             exit 1
           fi
 
-          echo "macOS build contents:"
-          find "$BUILD" -maxdepth 3 -print
+          echo ""
+          echo "✓ Node.js runtime contains x86_64 + arm64"
+
+      - name: Verify macOS launcher
+        shell: bash
+        run: |
+          RELEASE_DIR="${{ steps.release.outputs.release_dir }}"
+          LAUNCHER="$RELEASE_DIR/MAILIX.app/Contents/MacOS/MAILIX"
+
+          if [ ! -f "$LAUNCHER" ]; then
+            echo "ERROR: MAILIX launcher is missing."
+            exit 1
+          fi
+
+          chmod +x "$LAUNCHER"
+
+          if [ ! -x "$LAUNCHER" ]; then
+            echo "ERROR: MAILIX launcher is not executable."
+            exit 1
+          fi
+
+          echo "✓ MAILIX launcher exists"
+
+      - name: Verify Info.plist
+        shell: bash
+        run: |
+          RELEASE_DIR="${{ steps.release.outputs.release_dir }}"
+          PLIST="$RELEASE_DIR/MAILIX.app/Contents/Info.plist"
+
+          if [ ! -f "$PLIST" ]; then
+            echo "ERROR: Info.plist is missing."
+            exit 1
+          fi
+
+          plutil -lint "$PLIST"
+
+          echo "✓ Info.plist valid"
+
+      - name: Verify app bundle
+        shell: bash
+        run: |
+          RELEASE_DIR="${{ steps.release.outputs.release_dir }}"
+          APP="$RELEASE_DIR/MAILIX.app"
+
+          codesign --verify --deep --strict "$APP"
+
+          echo "✓ MAILIX.app code signature verified"
+
+      - name: Show final bundle
+        shell: bash
+        run: |
+          RELEASE_DIR="${{ steps.release.outputs.release_dir }}"
+
+          echo "========================================"
+          echo "MAILIX macOS UNIVERSAL BUILD"
+          echo "========================================"
+
+          find "$RELEASE_DIR" -maxdepth 5 -print
+
+          echo ""
+          echo "Bundle size:"
+          du -sh "$RELEASE_DIR"
 
       - name: Create release directory
         run: mkdir -p dist/releases
@@ -123,24 +212,27 @@ jobs:
         shell: bash
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          BUILD="${{ steps.build.outputs.dir }}"
+          RELEASE_DIR="${{ steps.release.outputs.release_dir }}"
 
           OUTPUT="dist/releases/mailix-macos-universal-v${VERSION}.zip"
 
-          echo "Creating:"
-          echo "$OUTPUT"
+          rm -f "$OUTPUT"
 
           ditto \
             -c \
             -k \
             --sequesterRsrc \
             --keepParent \
-            "$BUILD" \
+            "$RELEASE_DIR" \
             "$OUTPUT"
 
-          test -f "$OUTPUT"
+          if [ ! -f "$OUTPUT" ]; then
+            echo "ERROR: ZIP was not created."
+            exit 1
+          fi
 
-          echo "ZIP created successfully."
+          echo "✓ Created:"
+          echo "$OUTPUT"
 
       - name: Generate SHA256SUMS
         shell: bash
@@ -153,10 +245,10 @@ jobs:
             "mailix-macos-universal-v${VERSION}.zip" \
             > SHA256SUMS
 
-          echo "Checksums:"
+          echo "SHA256SUMS:"
           cat SHA256SUMS
 
-      - name: Verify release artifacts
+      - name: Final artifact verification
         shell: bash
         run: |
           VERSION="${{ steps.version.outputs.version }}"
@@ -167,8 +259,14 @@ jobs:
           test -f "$ZIP"
           test -f "$SUMS"
 
-          echo "Release artifacts verified:"
-          ls -lh "$ZIP" "$SUMS"
+          echo "========================================"
+          echo "MAILIX macOS RELEASE READY"
+          echo "========================================"
+          echo ""
+          ls -lh "$ZIP"
+          ls -lh "$SUMS"
+          echo ""
+          cat "$SUMS"
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
