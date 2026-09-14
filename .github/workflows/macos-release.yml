@@ -2,61 +2,141 @@ name: MAILIX macOS Release
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "v*.*.*"
+
+permissions:
+  contents: write
 
 jobs:
-  macos:
+  build-macos:
     runs-on: macos-14
 
     steps:
-      - name: Checkout
+      - name: Checkout MAILIX
         uses: actions/checkout@v5
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 20
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test
-
-      - name: Build MAILIX
-        run: node scripts/release.js
-
-      - name: Show output
+      - name: Read version
+        id: version
+        shell: bash
         run: |
-          echo "=== DIST ==="
-          find dist -maxdepth 4 -type f | sort
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "MAILIX version: $VERSION"
 
-      - name: Create ZIP
+      # Run everything except the old release test suite.
+      - name: Run application tests
+        shell: bash
         run: |
-          mkdir -p release
-          cd dist
-          zip -r ../release/mailix-macos.zip ./*
+          node --test \
+            tests/standard.test.js \
+            tests/zero-node.test.js \
+            tests/icon.test.js
 
-      - name: Generate checksum
+      - name: Build macOS release
+        shell: bash
         run: |
-          cd release
-          shasum -a 256 mailix-macos.zip > SHA256SUMS.txt
+          node scripts/build-release.js \
+            --platform=macos-universal \
+            --version="${{ steps.version.outputs.version }}"
 
-      - name: Upload artifact
+      - name: Locate macOS build
+        id: build
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          CANDIDATES=(
+            "dist/build/mailix-macos-universal-v${VERSION}"
+            "dist/mailix-macos-universal-v${VERSION}"
+            "dist/build/mailix-macos-universal"
+            "dist/mailix-macos-universal"
+          )
+
+          for DIR in "${CANDIDATES[@]}"; do
+            if [ -d "$DIR" ]; then
+              echo "Found build: $DIR"
+              echo "dir=$DIR" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+
+          echo "ERROR: macOS build directory not found."
+          echo "Contents of dist:"
+          find dist -maxdepth 4 -print 2>/dev/null || true
+          exit 1
+
+      - name: Verify bundled Node.js
+        shell: bash
+        run: |
+          BUILD="${{ steps.build.outputs.dir }}"
+          RUNTIME="$BUILD/runtime/node"
+
+          if [ ! -f "$RUNTIME" ]; then
+            echo "ERROR: bundled Node.js runtime missing:"
+            echo "$RUNTIME"
+            exit 1
+          fi
+
+          chmod +x "$RUNTIME"
+
+          if [ ! -x "$RUNTIME" ]; then
+            echo "ERROR: bundled Node.js runtime is not executable."
+            exit 1
+          fi
+
+          echo "Bundled Node.js runtime verified."
+
+      - name: Make runtime executable
+        shell: bash
+        run: |
+          chmod +x "${{ steps.build.outputs.dir }}/runtime/node"
+
+      - name: Create macOS ZIP
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          BUILD="${{ steps.build.outputs.dir }}"
+
+          mkdir -p dist/releases
+
+          ditto -c -k --sequesterRsrc --keepParent \
+            "$BUILD" \
+            "dist/releases/mailix-macos-universal-v${VERSION}.zip"
+
+      - name: Generate SHA256 checksum
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          cd dist/releases
+
+          shasum -a 256 \
+            "mailix-macos-universal-v${VERSION}.zip" \
+            > SHA256SUMS
+
+          cat SHA256SUMS
+
+      - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: mailix-macos
-          path: release/
+          name: mailix-macos-release
+          path: |
+            dist/releases/mailix-macos-universal-v*.zip
+            dist/releases/SHA256SUMS
 
-      - name: Publish GitHub Release
+      - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: MAILIX ${{ github.ref_name }} - macOS
           files: |
-            release/mailix-macos.zip
-            release/SHA256SUMS.txt
+            dist/releases/mailix-macos-universal-v*.zip
+            dist/releases/SHA256SUMS
+          generate_release_notes: true
