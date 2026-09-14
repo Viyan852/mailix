@@ -1,30 +1,53 @@
 'use strict';
 
+/**
+ * MAILIX Release Orchestrator
+ *
+ * One-command production release:
+ *
+ *   npm run release
+ *
+ * Responsibilities:
+ *   1. Read package version
+ *   2. Verify Git working tree
+ *   3. Validate required assets
+ *   4. Run complete test suite
+ *   5. Run secret scanner
+ *   6. Build platform release
+ *   7. Locate build output
+ *   8. Verify bundled Node.js runtime
+ *   9. Verify release icon
+ *  10. Create portable ZIP
+ *  11. Build Windows installer when available
+ *  12. Generate SHA256SUMS
+ *  13. Create and push Git tag
+ *
+ * Supported release platforms:
+ *   - Windows x64
+ *   - macOS
+ *
+ * MAILIX is Zero-Node:
+ * End users receive a bundled Node.js runtime.
+ */
+
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { execSync, execFileSync } = require('child_process');
+const {
+  execSync,
+  execFileSync
+} = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
 const PACKAGE_JSON = path.join(ROOT, 'package.json');
 
-function readPackageVersion() {
-  const packageJson = JSON.parse(
-    fs.readFileSync(PACKAGE_JSON, 'utf8')
-  );
-
-  if (!packageJson.version) {
-    throw new Error('package.json does not contain a version.');
-  }
-
-  return packageJson.version;
-}
-
-const VERSION = readPackageVersion();
-
 const IS_WINDOWS = process.platform === 'win32';
-const IS_MACOS = process.platform === 'darwin';
+const IS_MACOS = process.platform === 'darwin');
+
+/* ============================================================
+   Helpers
+   ============================================================ */
 
 function exists(file) {
   return fs.existsSync(file);
@@ -38,12 +61,36 @@ function run(command, args = []) {
   });
 }
 
+/* ============================================================
+   Version
+   ============================================================ */
+
+function readPackageVersion() {
+  const packageJson = JSON.parse(
+    fs.readFileSync(PACKAGE_JSON, 'utf8')
+  );
+
+  if (!packageJson.version) {
+    throw new Error(
+      'package.json does not contain a version.'
+    );
+  }
+
+  return packageJson.version;
+}
+
+const VERSION = readPackageVersion();
+
+/* ============================================================
+   Git Working Tree
+   ============================================================ */
+
 /**
- * Verify that the Git working tree is clean.
- *
  * Release MUST NOT continue with uncommitted changes.
+ *
+ * This intentionally allows a source archive without Git.
  */
-function checkGitWorkingTree() {
+function ensureCleanTree() {
   try {
     const status = execSync(
       'git status --porcelain',
@@ -55,43 +102,67 @@ function checkGitWorkingTree() {
 
     if (status.length > 0) {
       throw new Error(
-        'Release aborted: uncommitted changes detected. Commit or stash all changes before releasing.'
+        'Git working tree has uncommitted changes. Commit or stash before releasing.'
       );
     }
 
-    console.log('✓ Working tree clean');
+    console.log('✓ Git working tree clean');
   } catch (error) {
     if (
       error.message &&
-      error.message.includes('uncommitted changes')
+      error.message.includes(
+        'Git working tree has uncommitted changes'
+      )
     ) {
       throw error;
     }
 
-    // A source archive without Git is allowed.
-    console.log('⚠ Git working-tree check skipped.');
+    /*
+     * Git is optional when running from a source archive.
+     */
+    console.log(
+      '⚠ Git working-tree check skipped.'
+    );
   }
 }
 
-function validateIcon() {
-  const icon = path.join(ROOT, 'assets', 'icon.ico');
+/* ============================================================
+   Asset Validation
+   ============================================================ */
 
-  console.log('→ Validating assets/icon.ico…');
+function validateIcon() {
+  const icon = path.join(
+    ROOT,
+    'assets',
+    'icon.ico'
+  );
+
+  console.log(
+    '→ Validating assets/icon.ico…'
+  );
 
   if (!exists(icon)) {
-    throw new Error(`Missing required icon: ${icon}`);
+    throw new Error(
+      `Missing required icon: ${icon}`
+    );
   }
 
   const size = fs.statSync(icon).size;
 
   if (size <= 0) {
-    throw new Error('assets/icon.ico is empty.');
+    throw new Error(
+      'assets/icon.ico is empty.'
+    );
   }
 
   console.log(
     `✓ Icon OK (${(size / 1024).toFixed(1)} KB)`
   );
 }
+
+/* ============================================================
+   Tests
+   ============================================================ */
 
 function runTests() {
   console.log('→ Running tests…');
@@ -104,6 +175,10 @@ function runTests() {
   console.log('✓ Tests passed');
 }
 
+/* ============================================================
+   Secret Scanner
+   ============================================================ */
+
 function runSecretScan() {
   const scanner = path.join(
     ROOT,
@@ -112,19 +187,30 @@ function runSecretScan() {
   );
 
   if (!exists(scanner)) {
+    console.log(
+      '⚠ Secret scanner not found. Skipping.'
+    );
     return;
   }
 
-  console.log('→ Running secret scanner…');
+  console.log(
+    '→ Running secret scanner…'
+  );
 
-  run(process.execPath, [scanner]);
+  run(
+    process.execPath,
+    [scanner]
+  );
 
-  console.log('✓ Secret scan passed');
+  console.log(
+    '✓ Secret scan passed'
+  );
 }
 
-/**
- * Detect the macOS target supported by build-release.js.
- */
+/* ============================================================
+   macOS Target Detection
+   ============================================================ */
+
 function detectMacOSTarget() {
   const builder = path.join(
     ROOT,
@@ -169,6 +255,10 @@ function detectMacOSTarget() {
   );
 }
 
+/* ============================================================
+   Build
+   ============================================================ */
+
 function buildRelease() {
   const builder = path.join(
     ROOT,
@@ -194,16 +284,25 @@ function buildRelease() {
     );
   }
 
-  console.log(`→ Building target: ${target}`);
+  console.log(
+    `→ Building target: ${target}`
+  );
 
-  run(process.execPath, [
-    builder,
-    `--platform=${target}`,
-    `--version=${VERSION}`
-  ]);
+  run(
+    process.execPath,
+    [
+      builder,
+      `--platform=${target}`,
+      `--version=${VERSION}`
+    ]
+  );
 
   return target;
 }
+
+/* ============================================================
+   Build Directory Detection
+   ============================================================ */
 
 function locateBuildDir(target) {
   const candidates = [
@@ -212,15 +311,18 @@ function locateBuildDir(target) {
       'build',
       `mailix-${target}-v${VERSION}`
     ),
+
     path.join(
       DIST,
       `mailix-${target}`
     ),
+
     path.join(
       DIST,
-      `build`,
+      'build',
       `mailix-${target}`
     ),
+
     path.join(
       DIST,
       `mailix-${target}-v${VERSION}`
@@ -244,13 +346,17 @@ function locateBuildDir(target) {
   if (exists(buildDirectory)) {
     const entries = fs.readdirSync(
       buildDirectory,
-      { withFileTypes: true }
+      {
+        withFileTypes: true
+      }
     );
 
     const match = entries.find(
       entry =>
         entry.isDirectory() &&
-        entry.name.toLowerCase().includes('mailix')
+        entry.name
+          .toLowerCase()
+          .includes('mailix')
     );
 
     if (match) {
@@ -266,11 +372,15 @@ function locateBuildDir(target) {
   );
 }
 
+/* ============================================================
+   Bundled Node.js Runtime Validation
+   ============================================================ */
+
 /**
- * Verify the bundled Node.js runtime.
+ * MAILIX is Zero-Node.
  *
- * MAILIX is Zero-Node, so a release without its bundled
- * runtime is invalid.
+ * Every production build MUST contain its own
+ * Node.js runtime.
  */
 function verifyBundledRuntime(buildDir) {
   console.log(
@@ -291,7 +401,7 @@ function verifyBundledRuntime(buildDir) {
 
   if (!exists(runtime)) {
     throw new Error(
-      `Release validation failed: bundled Node.js runtime is missing: ${runtime}`
+      `Refusing to declare release successful: bundled runtime is missing: ${runtime}`
     );
   }
 
@@ -299,11 +409,17 @@ function verifyBundledRuntime(buildDir) {
 
   if (!stat.isFile()) {
     throw new Error(
-      `Release validation failed: bundled Node.js runtime is not a file: ${runtime}`
+      `Refusing to declare release successful: bundled runtime is not a file: ${runtime}`
     );
   }
 
-  if (!IS_WINDOWS && (stat.mode & 0o111) === 0) {
+  /*
+   * macOS/Linux runtime needs executable permissions.
+   */
+  if (
+    !IS_WINDOWS &&
+    (stat.mode & 0o111) === 0
+  ) {
     fs.chmodSync(
       runtime,
       stat.mode | 0o755
@@ -311,9 +427,16 @@ function verifyBundledRuntime(buildDir) {
   }
 
   console.log(
-    `✓ Bundled Node.js runtime found: ${path.relative(ROOT, runtime)}`
+    `✓ Bundled Node.js runtime found: ${path.relative(
+      ROOT,
+      runtime
+    )}`
   );
 }
+
+/* ============================================================
+   Built Icon Validation
+   ============================================================ */
 
 function verifyBuiltIcon(buildDir) {
   console.log(
@@ -332,14 +455,22 @@ function verifyBuiltIcon(buildDir) {
     );
   }
 
-  if (fs.statSync(icon).size <= 0) {
+  if (
+    fs.statSync(icon).size <= 0
+  ) {
     throw new Error(
       `Release validation failed: icon is empty: ${icon}`
     );
   }
 
-  console.log('✓ Release icon found');
+  console.log(
+    '✓ Release icon found'
+  );
 }
+
+/* ============================================================
+   Portable ZIP
+   ============================================================ */
 
 function createPortableZip(
   buildDir,
@@ -355,13 +486,17 @@ function createPortableZip(
 
   fs.mkdirSync(
     DIST,
-    { recursive: true }
+    {
+      recursive: true
+    }
   );
 
   if (exists(output)) {
     fs.rmSync(
       output,
-      { force: true }
+      {
+        force: true
+      }
     );
   }
 
@@ -370,33 +505,47 @@ function createPortableZip(
   );
 
   if (IS_WINDOWS) {
-    run('powershell', [
-      '-NoProfile',
-      '-Command',
-      `Compress-Archive -Path "${buildDir}\\*" -DestinationPath "${output}" -Force`
-    ]);
+    run(
+      'powershell',
+      [
+        '-NoProfile',
+        '-Command',
+        `Compress-Archive -Path "${buildDir}\\*" -DestinationPath "${output}" -Force`
+      ]
+    );
   } else {
-    run('ditto', [
-      '-c',
-      '-k',
-      '--sequesterRsrc',
-      '--keepParent',
-      buildDir,
-      output
-    ]);
+    run(
+      'ditto',
+      [
+        '-c',
+        '-k',
+        '--sequesterRsrc',
+        '--keepParent',
+        buildDir,
+        output
+      ]
+    );
   }
 
   console.log(
-    `✓ Created ${path.relative(ROOT, output)}`
+    `✓ Created ${path.relative(
+      ROOT,
+      output
+    )}`
   );
 
   return output;
 }
 
+/* ============================================================
+   Windows Installer
+   ============================================================ */
+
 /**
  * Windows installer is optional.
  *
- * macOS NEVER attempts to run the Windows NSIS installer.
+ * macOS NEVER attempts to run the Windows
+ * NSIS installer.
  */
 function buildInstaller(buildDir) {
   if (!IS_WINDOWS) {
@@ -422,11 +571,14 @@ function buildInstaller(buildDir) {
   );
 
   try {
-    run(process.execPath, [
-      installerScript,
-      `--source=${buildDir}`,
-      `--version=${VERSION}`
-    ]);
+    run(
+      process.execPath,
+      [
+        installerScript,
+        `--source=${buildDir}`,
+        `--version=${VERSION}`
+      ]
+    );
   } catch (error) {
     console.log(
       '⚠ Windows installer build skipped.'
@@ -458,6 +610,10 @@ function buildInstaller(buildDir) {
 
   return output;
 }
+
+/* ============================================================
+   SHA256 Checksums
+   ============================================================ */
 
 function generateChecksums(files) {
   const checksumFile = path.join(
@@ -492,11 +648,18 @@ function generateChecksums(files) {
   );
 
   console.log(
-    `✓ Created ${path.relative(ROOT, checksumFile)}`
+    `✓ Created ${path.relative(
+      ROOT,
+      checksumFile
+    )}`
   );
 
   return checksumFile;
 }
+
+/* ============================================================
+   Git Tag + Push
+   ============================================================ */
 
 function gitTagAndPush() {
   try {
@@ -517,6 +680,9 @@ function gitTagAndPush() {
 
   const tag = `v${VERSION}`;
 
+  /*
+   * Never recreate an existing tag.
+   */
   try {
     execSync(
       `git rev-parse ${tag}`,
@@ -532,23 +698,31 @@ function gitTagAndPush() {
 
     return;
   } catch {
-    // Tag does not exist.
+    /*
+     * Tag does not exist.
+     */
   }
 
   try {
-    run('git', [
-      'tag',
-      '-a',
-      tag,
-      '-m',
-      `MAILIX ${tag}`
-    ]);
+    run(
+      'git',
+      [
+        'tag',
+        '-a',
+        tag,
+        '-m',
+        `MAILIX ${tag}`
+      ]
+    );
 
-    run('git', [
-      'push',
-      'origin',
-      tag
-    ]);
+    run(
+      'git',
+      [
+        'push',
+        'origin',
+        tag
+      ]
+    );
 
     console.log(
       `✓ Published ${tag}`
@@ -564,73 +738,16 @@ function gitTagAndPush() {
   }
 }
 
-function main() {
-  console.log(
-    '\nMAILIX Release Orchestrator\n'
-  );
+/* ============================================================
+   Release Summary
+   ============================================================ */
 
-  console.log(
-    `→ Version: ${VERSION}`
-  );
-
-  console.log(
-    `→ Platform: ${process.platform}`
-  );
-
-  if (
-    !IS_WINDOWS &&
-    !IS_MACOS
-  ) {
-    throw new Error(
-      `Unsupported release platform: ${process.platform}`
-    );
-  }
-
-  checkGitWorkingTree();
-
-  validateIcon();
-
-  runTests();
-
-  runSecretScan();
-
-  const target =
-    buildRelease();
-
-  const buildDir =
-    locateBuildDir(target);
-
-  console.log(
-    `✓ Build found: ${buildDir}`
-  );
-
-  verifyBundledRuntime(
-    buildDir
-  );
-
-  verifyBuiltIcon(
-    buildDir
-  );
-
-  const zip =
-    createPortableZip(
-      buildDir,
-      target
-    );
-
-  const installer =
-    buildInstaller(
-      buildDir
-    );
-
-  const checksum =
-    generateChecksums([
-      zip,
-      installer
-    ]);
-
-  gitTagAndPush();
-
+function printReleaseSummary(
+  target,
+  zip,
+  installer,
+  checksum
+) {
   console.log(
     '\n========================================'
   );
@@ -669,6 +786,132 @@ function main() {
     '========================================\n'
   );
 }
+
+/* ============================================================
+   Main Release Flow
+   ============================================================ */
+
+function main() {
+  console.log(
+    '\nMAILIX Release Orchestrator\n'
+  );
+
+  console.log(
+    `→ Version: ${VERSION}`
+  );
+
+  console.log(
+    `→ Platform: ${process.platform}`
+  );
+
+  if (
+    !IS_WINDOWS &&
+    !IS_MACOS
+  ) {
+    throw new Error(
+      `Unsupported release platform: ${process.platform}`
+    );
+  }
+
+  /*
+   * 1. Git must be clean BEFORE building.
+   */
+  ensureCleanTree();
+
+  /*
+   * 2. Required project assets.
+   */
+  validateIcon();
+
+  /*
+   * 3. Full automated test suite.
+   */
+  runTests();
+
+  /*
+   * 4. Secret scan.
+   */
+  runSecretScan();
+
+  /*
+   * 5. Platform build.
+   */
+  const target =
+    buildRelease();
+
+  /*
+   * 6. Find generated build.
+   */
+  const buildDir =
+    locateBuildDir(target);
+
+  console.log(
+    `✓ Build found: ${buildDir}`
+  );
+
+  /*
+   * 7. Zero-Node validation.
+   */
+  verifyBundledRuntime(
+    buildDir
+  );
+
+  /*
+   * 8. Icon validation.
+   */
+  verifyBuiltIcon(
+    buildDir
+  );
+
+  /*
+   * 9. Portable release.
+   */
+  const zip =
+    createPortableZip(
+      buildDir,
+      target
+    );
+
+  /*
+   * 10. Windows installer.
+   *
+   * Automatically skipped on macOS.
+   */
+  const installer =
+    buildInstaller(
+      buildDir
+    );
+
+  /*
+   * 11. Checksums.
+   */
+  const checksum =
+    generateChecksums([
+      zip,
+      installer
+    ]);
+
+  /*
+   * 12. Git tag.
+   *
+   * Existing tags are never recreated.
+   */
+  gitTagAndPush();
+
+  /*
+   * 13. Final success message.
+   */
+  printReleaseSummary(
+    target,
+    zip,
+    installer,
+    checksum
+  );
+}
+
+/* ============================================================
+   Execute
+   ============================================================ */
 
 try {
   main();
