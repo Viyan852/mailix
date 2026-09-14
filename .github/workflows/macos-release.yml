@@ -2,19 +2,23 @@ name: MAILIX macOS Release
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - "v*"
 
 permissions:
   contents: write
 
 jobs:
-  build-macos:
+  macos:
+    name: Build MAILIX for macOS
     runs-on: macos-14
 
     steps:
-      - name: Checkout MAILIX
+      - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Setup Node.js
+      - name: Setup Node.js 20
         uses: actions/setup-node@v5
         with:
           node-version: 20
@@ -23,54 +27,57 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Read version
+      - name: Read MAILIX version
         id: version
         shell: bash
         run: |
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION="$(node -p "require('./package.json').version")"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "MAILIX version: $VERSION"
 
-      # Run everything except the old release test suite.
-      - name: Run application tests
+      # Do NOT run the old release.test.js suite here.
+      # That suite validates release.js, which is intentionally
+      # not used by the macOS release pipeline.
+      - name: Run core tests
         shell: bash
         run: |
-          node --test \
-            tests/standard.test.js \
-            tests/zero-node.test.js \
-            tests/icon.test.js
+          npm test -- --test-name-pattern='^(?!.*release)'
 
-      - name: Build macOS release
+      - name: Build macOS universal release
         shell: bash
         run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
           node scripts/build-release.js \
             --platform=macos-universal \
-            --version="${{ steps.version.outputs.version }}"
+            --version="$VERSION"
 
-      - name: Locate macOS build
+      - name: Find macOS build
         id: build
         shell: bash
         run: |
           VERSION="${{ steps.version.outputs.version }}"
 
-          CANDIDATES=(
-            "dist/build/mailix-macos-universal-v${VERSION}"
-            "dist/mailix-macos-universal-v${VERSION}"
-            "dist/build/mailix-macos-universal"
+          for DIR in \
+            "dist/build/mailix-macos-universal-v${VERSION}" \
+            "dist/mailix-macos-universal-v${VERSION}" \
+            "dist/build/mailix-macos-universal" \
             "dist/mailix-macos-universal"
-          )
-
-          for DIR in "${CANDIDATES[@]}"; do
+          do
             if [ -d "$DIR" ]; then
-              echo "Found build: $DIR"
+              echo "Found macOS build:"
+              echo "$DIR"
               echo "dir=$DIR" >> "$GITHUB_OUTPUT"
               exit 0
             fi
           done
 
-          echo "ERROR: macOS build directory not found."
-          echo "Contents of dist:"
-          find dist -maxdepth 4 -print 2>/dev/null || true
+          echo "ERROR: Could not find macOS build."
+
+          echo ""
+          echo "Available dist files:"
+          find dist -maxdepth 5 -print 2>/dev/null || true
+
           exit 1
 
       - name: Verify bundled Node.js
@@ -79,39 +86,63 @@ jobs:
           BUILD="${{ steps.build.outputs.dir }}"
           RUNTIME="$BUILD/runtime/node"
 
+          echo "Checking:"
+          echo "$RUNTIME"
+
           if [ ! -f "$RUNTIME" ]; then
-            echo "ERROR: bundled Node.js runtime missing:"
-            echo "$RUNTIME"
+            echo "ERROR: Bundled Node.js runtime is missing."
             exit 1
           fi
 
           chmod +x "$RUNTIME"
 
           if [ ! -x "$RUNTIME" ]; then
-            echo "ERROR: bundled Node.js runtime is not executable."
+            echo "ERROR: Bundled Node.js runtime is not executable."
             exit 1
           fi
 
           echo "Bundled Node.js runtime verified."
 
-      - name: Make runtime executable
+      - name: Verify macOS application files
         shell: bash
         run: |
-          chmod +x "${{ steps.build.outputs.dir }}/runtime/node"
+          BUILD="${{ steps.build.outputs.dir }}"
 
-      - name: Create macOS ZIP
+          if [ ! -d "$BUILD" ]; then
+            echo "ERROR: Build directory disappeared."
+            exit 1
+          fi
+
+          echo "macOS build contents:"
+          find "$BUILD" -maxdepth 3 -print
+
+      - name: Create release directory
+        run: mkdir -p dist/releases
+
+      - name: Create macOS universal ZIP
         shell: bash
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           BUILD="${{ steps.build.outputs.dir }}"
 
-          mkdir -p dist/releases
+          OUTPUT="dist/releases/mailix-macos-universal-v${VERSION}.zip"
 
-          ditto -c -k --sequesterRsrc --keepParent \
+          echo "Creating:"
+          echo "$OUTPUT"
+
+          ditto \
+            -c \
+            -k \
+            --sequesterRsrc \
+            --keepParent \
             "$BUILD" \
-            "dist/releases/mailix-macos-universal-v${VERSION}.zip"
+            "$OUTPUT"
 
-      - name: Generate SHA256 checksum
+          test -f "$OUTPUT"
+
+          echo "ZIP created successfully."
+
+      - name: Generate SHA256SUMS
         shell: bash
         run: |
           VERSION="${{ steps.version.outputs.version }}"
@@ -122,17 +153,33 @@ jobs:
             "mailix-macos-universal-v${VERSION}.zip" \
             > SHA256SUMS
 
+          echo "Checksums:"
           cat SHA256SUMS
+
+      - name: Verify release artifacts
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          ZIP="dist/releases/mailix-macos-universal-v${VERSION}.zip"
+          SUMS="dist/releases/SHA256SUMS"
+
+          test -f "$ZIP"
+          test -f "$SUMS"
+
+          echo "Release artifacts verified:"
+          ls -lh "$ZIP" "$SUMS"
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: mailix-macos-release
+          name: mailix-macos-universal
           path: |
             dist/releases/mailix-macos-universal-v*.zip
             dist/releases/SHA256SUMS
+          if-no-files-found: error
 
-      - name: Create GitHub Release
+      - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
