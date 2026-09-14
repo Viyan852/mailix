@@ -1,28 +1,20 @@
-```yaml
 name: MAILIX macOS Release
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "v*.*.*"
-
-permissions:
-  contents: write
 
 jobs:
-  build:
-    name: Build macOS
+  macos:
     runs-on: macos-14
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: 20
 
       - name: Install dependencies
         run: npm ci
@@ -30,46 +22,38 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Build release
+      - name: Build MAILIX
         run: node scripts/release.js
 
-      - name: Show build output
+      - name: Show output
         run: |
-          echo "Build output:"
+          echo "=== DIST ==="
           find dist -maxdepth 4 -type f | sort
 
-      - name: Package macOS builds
+      - name: Create ZIP
         run: |
           mkdir -p release
-
-          if [ -d "dist/build/mailix-macos-universal" ]; then
-            ditto -c -k --sequesterRsrc --keepParent \
-              "dist/build/mailix-macos-universal" \
-              "release/mailix-macos-universal.zip"
-          elif [ -d "dist/mailix-macos-universal" ]; then
-            ditto -c -k --sequesterRsrc --keepParent \
-              "dist/mailix-macos-universal" \
-              "release/mailix-macos-universal.zip"
-          else
-            echo "ERROR: macOS build was not created."
-            exit 1
-          fi
-
-          shasum -a 256 release/*.zip > release/SHA256SUMS.txt
+          cd dist
+          zip -r ../release/mailix-macos.zip ./*
+          
+      - name: Generate checksum
+        run: |
+          cd release
+          shasum -a 256 mailix-macos.zip > SHA256SUMS.txt
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mailix-macos-release
+          name: mailix-macos
           path: release/
 
-      - name: Publish GitHub Release
+      - name: Publish release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          name: MAILIX ${{ github.ref_name }} — macOS Release
           tag_name: ${{ github.ref_name }}
+          name: MAILIX ${{ github.ref_name }} - macOS
           files: |
-            release/*.zip
-            release/*.txt
+            release/mailix-macos.zip
+            release/SHA256SUMS.txt
 ```
